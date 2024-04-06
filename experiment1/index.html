@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<!-- This title is used for tabs and bookmarks -->
+	<title>Experiment X - Subject/Topic</title>
+
+	<!-- Use UTF character set, a good idea with any webpage -->
+	<meta charset="UTF-8" />
+	<!-- Set viewport so page remains consistently scaled w narrow devices -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+	<!-- Include CSS file, including a site-wide CSS and for this particular page -->
+	<link rel="stylesheet" type="text/css" href="../css/site.css">
+	<link rel="stylesheet" type="text/css" href="../css/fonts.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+
+	<!-- Load jQuery library -->
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
+	<script type="text/javascript" src="../js/site.js" DEFER></script>
+	<!-- Use me for a p5.js project -->
+	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
+</head>
+
+<body>
+	<!-- Style this page by changing the CSS in ../css/site.css or css/experiment.css -->
+	<main id="content">
+		<section>
+
+			<h1>Experiment 1 - Text Generation</h1>
+			<div class="navbar">
+				<a href="/index.html">Home</a>
+				<a href="/experiment1/index.html">Experiment 1</a>
+			</div>
+			<div class="minor-section">
+				<div class="story-container">
+					<p id="story"></p>
+					<button id="generate">Generate</button>
+				</div>
+			</div>
+
+			<div class="minor-section">
+				<h2>Description</h2>
+				<p>
+					This project is a remix of the provided Bad Quest Generator. Instead of
+					generating bad quests, it generates bad political manifestos left after
+					a revolutionary act. The vocabulary lends itself to funny results though
+					some combinations can be a little dark.
+				</p>
+			</div>
+
+			<div class="minor-section">
+				<h2>Technical</h2>
+				<p>
+					The project is built on a Bad Quest Generator provided in class.
+					The generator uses javascript pattern matching using the replace function in a while loop. It loops
+					until there are no more matches. The match function matches agains a regex pattern looking for '$'
+					followed by a word. The replacer function then randomly selects a word from the vocabulary list
+					corresponding to the matched word and replaces the matched word with the selected word. The project
+					was modified to include a few new features.
+				</p>
+				<p>
+					To store chosen words I simply set the filler array corresponding to that vocabulary list to only
+					include the chosen word. For example, I wanted to store the word chosen for the “oppressor” fill-in.
+					So, when the replace method matches with the oppressor regex pattern, the replacer function selects
+					a word from the oppressor vocabulary list in the fillers array and then sets the oppressor
+					vocabulary list to the selected word. So, when I need to fill in the oppressor fill-in again it will
+					choose from a list with only one element which is the previously selected word.
+				</p>
+				<p>
+					The other modification is built on the ability to reuse fill-ins. I wanted to be able to capitalize
+					fill-ins that
+					started a sentence. The issue was that these fill-ins should not always be capitalized. So, I could
+					not just capitalize
+					the word in the vocabulary list. Instead, I added a keyword, '$up', that matched the established
+					regex pattern: '$word'.
+					When the replacer method matches the up keyword it replaces it with an empty string and then sets a
+					flag to capitalize
+					the next word. On all replacer calls it checks if the flag is set and if so will capitalize the
+					first letter of the
+					selected word/word sequence and then unset the flag.
+				</p>
+			</div>
+
+			<div class="minor-section">
+				<h2>Reflection</h2>
+				<p>
+					The most challenging part of this project was getting words on the page.
+					Filling out the vocabulary lists got tiring quickly especially since
+					I was trying to make it at least a little bit funny. I think it turned
+					out pretty good and it got a few chuckles from my politi-fan brother.
+					The JS was straightforward though the Glitch environment was annoying
+					to transition to as it obfuscated the JS and made it difficult to debug.
+					I will need to improve my knowledge of the standard JS library and jQuery
+					as I am not familiar enough to be able to write code quickly.
+					Getting the website to look halfway decent was also a challenge. Copilot
+					was quite helpful for jogging my memory on how to do things in HTML and
+					CSS. I think the website looks pretty OK for right now considering the time
+					invested in it. Adding more words to the vocabulary lists would improve the
+					replayability but for a one-off project I think it is fine.
+					One thing I would like to add is a way to save the generated manifesto.
+					Currently, the manifesto is generated on the page and is lost when the
+					page is refreshed. I think it would be cool to have a save button that
+					would save the manifesto to a file or cookie.
+				</p>
+			</div>
+
+		</section>
+	</main>
+</body>
+
+</html>

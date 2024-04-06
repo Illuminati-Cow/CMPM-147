@@ -1,0 +1,114 @@
+:root {
+  --highlight-color: #D3489B;
+  --bg-color: #1E1E1E;
+  --text-color: #EEF0EF;
+  --altbg-color: #56575C;
+}
+
+.navbar {
+  display: flex;
+  justify-content: flex-start;
+  width: fit-content;
+  align-items: center;
+  padding: 0.5em;
+  margin: 1em;
+  background-color: var(--bg-color);
+  border-bottom: solid .25em var(--highlight-color);
+  border-radius: 10px;
+  font-size: larger;
+}
+
+.navbar a {
+  margin-right: 20px;
+  color: var(--text-color);
+  text-decoration: none;
+  text-wrap: nowrap;
+}
+
+.navbar a:hover {
+  color: var(--highlight-color);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2 {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  font-weight: lighter;
+  text-decoration: underline;
+  text-decoration-color: var(--highlight-color);
+  -moz-text-decoration-color: var(--highlight-color);
+  text-decoration-thickness: 0.2em;
+  text-underline-offset: 0.25em;
+}
+
+h2 {
+  text-decoration-thickness: 0.1em;
+  font-size: 1.5em;
+}
+
+a {
+  color: var(--text-color);
+  text-decoration: wavy double;
+  text-decoration-color: var(--highlight-color);
+  -moz-text-decoration-color: var(--highlight-color);
+  text-decoration-thickness: 0.15em;
+  text-underline-offset: 0.15em;
+  line-height: double;
+}
+
+#content {
+  width: calc(100% - 30px);
+  margin: 1em;
+  padding: 10px;
+  font-family: "Ubuntu", Helvetica, Verdana, Tahoma, sans-serif;
+}
+
+.minor-section {
+  margin: 1em;
+  padding: 10px;
+  background-color: var(--altbg-color);
+  /*border: solid 3px #D3489B;*/
+  border-radius: 10px;
+}
+
+
+.minor-section h2 {
+  font-size: 1.2em;
+}
+
+/* Set the image to be responsive */
+.image-wrapper img {
+  max-width: 50%;
+  height: auto;
+}
+
+/* Set the canvas element to be the full size of the container */
+canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.fullscreen-box {
+  display: flex;
+  justify-content: flex-end; /* Aligns the button to the right */
+  margin-top: 0.25em;
+}
+
+.fullscreen-box button {
+  font-size: 0.6em;
+}
+
+body.is-fullscreen #canvas-container {
+  position: fixed; /* Use 'fixed' instead of 'absolute' to ensure it covers the entire screen */
+  top: 0;
+  left: 0; /* Add 'left: 0' to align it properly to the top-left corner */
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0; /* Remove any default margins */
+  z-index: 1000; /* Ensure it's above other content */
+}
