@@ -1,8 +1,8 @@
 class Background {
     constructor() {
         this.sky = new Gradient(width, height, color("#100f39"), color("#9b72da"))
-        this.lights = createGraphics(Math.floor(width - width / 5), Math.floor(height / 3))
-        this.createLights(0.67, 100)
+        this.lights = createGraphics(Math.floor(width - 20), Math.floor(height / 3))
+        this.createLights(0.67, height / 4)
     }
 
     draw() {
@@ -28,6 +28,6 @@ class Background {
     }
     
     drawLights() {
-        image(this.lights, Math.floor(width / 10), Math.floor(this.lights.height / 2));
+        image(this.lights, 10, Math.floor(this.lights.height / 2));
     }
 }
