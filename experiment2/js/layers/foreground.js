@@ -1,0 +1,9 @@
+class Foreground {
+    constructor() {
+        
+    }
+
+    draw() {
+        
+    }
+}
