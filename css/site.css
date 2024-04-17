@@ -85,25 +85,22 @@ a {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1em;
+  gap: 2em;
 }
 
 .multi-box .text {
-  flex: 1;
-  padding-right: 1em;
+  flex: 1 1 auto;
+  max-width: 50%;
   align-self: flex-start;
+  line-height: 1.5em;
 }
 
 .multi-box .image {
   max-width: 50%;
-  flex-basis: 500px;
   margin-left: auto; /* Add this line to align the image to the right */
   margin-right: 0; /* Add this line to remove any right margin */
-}
-
-.multi-box h1, .multi-box h2 {
-  width: 100%;
+  border: 2px solid var(--highlight-color);
+  border-radius: 2px;
 }
 
 /* Set the canvas element to be the full size of the container */
