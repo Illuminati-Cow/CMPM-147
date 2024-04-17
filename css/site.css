@@ -81,10 +81,29 @@ a {
   font-size: 1.2em;
 }
 
-/* Set the image to be responsive */
-.image-wrapper img {
+.multi-box {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1em;
+}
+
+.multi-box .text {
+  flex: 1;
+  padding-right: 1em;
+  align-self: flex-start;
+}
+
+.multi-box .image {
   max-width: 50%;
-  height: auto;
+  flex-basis: 500px;
+  margin-left: auto; /* Add this line to align the image to the right */
+  margin-right: 0; /* Add this line to remove any right margin */
+}
+
+.multi-box h1, .multi-box h2 {
+  width: 100%;
 }
 
 /* Set the canvas element to be the full size of the container */
