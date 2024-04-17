@@ -76,15 +76,30 @@ a {
   border-radius: 10px;
 }
 
-
 .minor-section h2 {
   font-size: 1.2em;
+}
+
+.minor-section h3 {
+  font-size: 1.1em;
+  font-weight: 300;
+  padding-left: 0.25em;
+}
+
+.minor-section .image-wrapper {
+  display: flex;
+  width: 100%;
+  max-height: 600px;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
 }
 
 .multi-box {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: nowrap;
   gap: 2em;
 }
 

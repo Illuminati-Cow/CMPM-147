@@ -13,15 +13,19 @@
 	<link rel="stylesheet" type="text/css" href="../css/site.css">
 	<link rel="stylesheet" type="text/css" href="../css/fonts.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
-
+	<!-- Load highlight.js for code highlighting -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script>hljs.highlightAll();</script>
 	<!-- Load jQuery library -->
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
         crossorigin="anonymous"></script>
-	<!-- Load p5.js library -->
-	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
-
+		<!-- Load p5.js library -->
+		<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
+		
 	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
+	<script type="text/javascript" src="./site.js"></script>
 	<script type="text/javascript" src="./js/objects/gradient.js" DEFER></script>
 	<script type="text/javascript" src="./js/layers/river.js" DEFER></script>
 	<script type="text/javascript" src="./js/layers/static_overlay.js" DEFER></script>
@@ -76,6 +80,17 @@
 							the lights in the background and the mirror effect seen prominently in the river and
 							street. 
 						</p>
+						<p>
+							My partner focused on creating the buildings so when we were complete,
+							we combined the layers to create the image. We developed our features
+							simultaneously so we frequently bounced ideas off of each other. One such
+							idea was created by a fluke rendering bug that caused the foreground elements
+							I was working on to become partially transparent. My partner sent me the image
+							and said my mirror effect looked really good. However, I had not created the effect
+							yet. When I saw the image I immediately implemented the bug as a feature and the 
+							result was a mirror-like effect. Without collaborating and communicating, we would
+							have likely not have come up with this. 
+						</p>
 					</div>
 					<img class="image" src="./cyberpunk _city.png"/>
 				</div>
@@ -83,12 +98,87 @@
 
 			<div class="minor-section">
 				<h2>Technical</h2>
-				<p>Describe in detail what you did technically and how it works?</p>
+				<h3 style="margin-bottom: -0.5em;">Gradient</h3>
+				<div id="tech-gradient" class="multi-box">
+					<div class="text" style="max-width: none;">
+						<p>
+							We used the p5.js library to display the canvas graphics used in this project. Because p5.js
+							does not have a built in gradient class, I wrote one myself. My gradient class has a draw
+							function intended to be called in p5.js's render loop and a generation function that generates
+							a gradient based on the class' current properties. I utilized ChatGPT to write the base function
+							and then tweaked and built on it to fit my use case. The weight property of the gradient class
+							allows for one color to take precedence over the other so that it will fill more of the gradient.
+							The function scans line by line, filling each line with an interpolated color. The interpolation
+							uses the current y-value progress of the algorithm to determine the interpolation value and the
+							start and end color values are supplied via class properties. 
+						</p>
+						<p>
+							I selected the initial colors to use by color-picking the reference image and then further refined
+							the values through trial and error. I found the site <a href="https://coolors.co">coolors.co</a>
+							quite useful in adjusting color values and converting between hsv and rgb values. HSV values are
+							much more intuitive to use but p5.js only supports rgb and hex values as far as I can tell so I
+							had to convert between the two frequently.
+						</p>
+						<h3 style="margin-bottom: -0.5em;">Stars & Static</h3>
+						<p>
+							The static overlay at the top of the screen was created on accident while attempting to make the
+							background stars / lights. I was utilizing a perlin noise function and then using a threshold value
+							so that only pixels over the threshold would be rendered. I then set an additional cutoff point
+							where values above would be rendered as white and values below would be black. By tweaking the values
+							I got an effect where black static would regenerate every frame with occasional white pixels.
+							I initally used the graphics object from p5.js, but the stroke function was significantly degrading
+							performance so I decided to swap to using a p5.js image and resetting the pixels every frame.
+						</p>
+						<p>
+							To make the lights, I had to pull the creation of the image out of the draw function so that it
+							would not be called every frame. I also elected to use the orignal graphics object method as it
+							did not need to be performant as it was only run once and it allowed for me to adjust the size
+							of the lights. I would run the createLights method once and then run a draw function every frame.
+						</p>
+						<p>
+							p5.js only has one draw function that serves as the main render loop so in order to seperate code
+							into its own files, we used a simple layer manager class. We loaded each layer class into it via its
+							constructor and then in the render loop we looped through each layer and called its draw function.
+							This allowed us to reorder layers as we saw fit and made version control trivial.
+						</p>
+					</div>
+					<div class="text" style="overflow: -moz-hidden-unscrollable;">
+						<pre style="overflow: -moz-hidden-unscrollable;">
+							<code style="overflow: -moz-hidden-unscrollable;">
+								regenerate() {
+									let gradient = createGraphics(this.width, this.height);
+									gradient.noFill();
+									for (let i = 0; i < this.height; i++) {
+										let inter = map(i, 0, this.height * this.weight, 0, 1);
+										let c = lerpColor(this.startColor, this.endColor, inter);
+										gradient.stroke(c);
+										gradient.line(0, i, this.width, i);
+									}
+									this.buffer = gradient
+								}
+							</code>
+						</pre> 
+					</div>
+				</div>
 			</div>
 
 			<div class="minor-section">
 				<h2>Reflection</h2>
-				<p>Each person that worked on the code should reflect on the process, the difficulties, and the successes of the experiment.</p>
+				<p>
+					This project turned out far better than we thought it would. It was in a bad state for a while and the buildings gave (one of) us a lot of trouble. Converting from Glitch to native JS introduced an odd bug that broke the buildings. By swapping two variables it inextricably worked. At first, using Glitch was convenient since it provided a clean environment for testing, however, the time it ended up taking to refactor code to fit it into the structure we were going for in VS Code ended up being more difficult than it was worth. 
+				</p>
+				<p>
+					In absence of using Glitch to collaborate, we used git while making sure to appropriately communicate pushes and merges. We only experienced minor merge conflicts that were easily resolved as we used separate branches to develop our features. This combined with using our one layer per file paradigm prevented our code from overlapping. The only conflicts that arose were minor line differences in our sketch file where we loaded our layers into the layer manager. Collaborating was a valuable experience that was mutually beneficial as we supported each other. We helped each other find bugs by talking through our process and reviewing code for particularly nasty bugs. Ideation was greatly improved as we bounced ideas off of each other throughout the coding and design process.
+				</p>
+				<p>
+					I am most happy with my gradient class and color selections for the gradients. I think they turn out looking very nice and when combined with
+					partial transparency they produce a pleasant mirror effect. The static effect
+					turned out well, but I think I should have made it more noticable by using greys instead of black as it is not noticable against a dark background. If
+					I used it on the bottom of the frame as well it would have looked nice. The
+					one thing I am dissapointed that I did not get to do was make the neon back
+					ground silhouette buildings seen in the reference image. They would have added more depth and variety which is the one thing this project is really missing.
+				</p>
+				
 			</div>
 
 		</section>
