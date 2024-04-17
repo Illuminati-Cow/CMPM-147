@@ -116,6 +116,8 @@ a {
   margin-right: 0; /* Add this line to remove any right margin */
   border: 2px solid var(--highlight-color);
   border-radius: 2px;
+  align-self: center;
+
 }
 
 /* Set the canvas element to be the full size of the container */
