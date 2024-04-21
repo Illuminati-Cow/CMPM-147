@@ -2,7 +2,7 @@
 <html>
 <head>
 	<!-- This title is used for tabs and bookmarks -->
-	<title>Experiment X - Subject/Topic</title>
+	<title>Experiment 3</title>
 
 	<!-- Use UTF character set, a good idea with any webpage -->
 	<meta charset="UTF-8" />
@@ -19,11 +19,6 @@
         crossorigin="anonymous"></script>
 	<!-- Load p5.js library -->
 	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
-
-	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
-    <script type="text/javascript" src="../js/site.js" DEFER></script>
-	<!-- Use me for a JavaScript OOP Project -->
-	<script type="text/javascript" src="./js/project.js" DEFER></script>
 	<!-- Use me for a p5.js project -->
 	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
 </head>
@@ -32,11 +27,18 @@
 	<main id="content">
 		<section>
 
-			<h1>Experiment X - Subject/Topic</h1>
+			<h1>Experiment 3 - Alternate Worlds</h1>
 
 			<div class="minor-section">
-				<div id="canvas-container">
-					<!-- canvas will be added here -->
+				<div class="multi-box">
+					<textarea cols="20" rows="20" id="asciiBox" style="opacity: 0.5; letter-spacing: 1ex; width: 320px; margin: 10px; font-family: monospace;"></textarea>
+					<div id="canvas-container">
+
+					</div>
+				</div>
+				<div id="reseed-box">
+					<button id="reseed-button">Reseed</button>
+					<p id="reseed-report"></p>
 				</div>
                 <div class="fullscreen-box">
                     <button id="fullscreen">Fullscreen</button>
