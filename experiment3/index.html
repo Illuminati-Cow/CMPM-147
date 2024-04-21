@@ -28,21 +28,28 @@
 		<section>
 
 			<h1>Experiment 3 - Alternate Worlds</h1>
-
+			<div class="navbar">
+				<a href="../index.html">Home</a>
+				<a href="../experiment1/index.html">Experiment 1</a>
+				<a href="../experiment2/index.html">Experiment 2</a>
+				<a href="../experiment3/index.html">Experiment 3</a>
+			</div>
 			<div class="minor-section">
 				<div class="multi-box">
-					<textarea cols="20" rows="20" id="asciiBox" style="opacity: 0.5; letter-spacing: 1ex; width: 320px; margin: 10px; font-family: monospace;"></textarea>
+					<div class="vertical">
+						<textarea cols="20" rows="20" id="asciiBox" style="opacity: 0.5; letter-spacing: 1ex; width: 320px; margin: 10px; font-family: monospace;"></textarea>
+						<div class="multi-box">
+							<button id="reseed-button">Reseed</button>
+							<p id="reseed-report" class="text"></p>
+						</div>
+						<div class="fullscreen-box">
+							<button id="fullscreen">Fullscreen</button>
+						</div>
+					</div>
 					<div id="canvas-container">
 
 					</div>
 				</div>
-				<div id="reseed-box">
-					<button id="reseed-button">Reseed</button>
-					<p id="reseed-report"></p>
-				</div>
-                <div class="fullscreen-box">
-                    <button id="fullscreen">Fullscreen</button>
-                </div>
 			</div>
 
 			<div class="minor-section">
