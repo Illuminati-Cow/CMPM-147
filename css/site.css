@@ -76,15 +76,48 @@ a {
   border-radius: 10px;
 }
 
-
 .minor-section h2 {
   font-size: 1.2em;
 }
 
-/* Set the image to be responsive */
-.image-wrapper img {
+.minor-section h3 {
+  font-size: 1.1em;
+  font-weight: 300;
+  padding-left: 0.25em;
+}
+
+.minor-section .image-wrapper {
+  display: flex;
+  width: 100%;
+  max-height: 600px;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.multi-box {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 2em;
+}
+
+.multi-box .text {
+  flex: 1 1 auto;
   max-width: 50%;
-  height: auto;
+  align-self: flex-start;
+  line-height: 1.5em;
+}
+
+.multi-box .image {
+  max-width: 50%;
+  margin-left: auto; /* Add this line to align the image to the right */
+  margin-right: 0; /* Add this line to remove any right margin */
+  border: 2px solid var(--highlight-color);
+  border-radius: 2px;
+  align-self: center;
+
 }
 
 /* Set the canvas element to be the full size of the container */

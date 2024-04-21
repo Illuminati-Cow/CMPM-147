@@ -71,6 +71,7 @@ class BuildingV1 {
     }
 
     move(x) {
-        this.x_i = x + this.x_origin;
+        let target = x + this.x_origin
+        this.x_i += (target - this.x_i) * .02
     }
 }
