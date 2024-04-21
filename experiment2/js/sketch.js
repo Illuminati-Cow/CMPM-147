@@ -44,7 +44,7 @@ function setup() {
   canvasContainer = $("#canvas-container");
   let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
   canvas.parent("canvas-container");
-  // resize canvas is the page is resized1
+  // resize canvas is the page is resized
   $(window).resize(function() {
     resizeScreen();
   });

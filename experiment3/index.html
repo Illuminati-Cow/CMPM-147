@@ -21,11 +21,13 @@
 	<!-- Load p5.js library -->
 	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
 	<!-- Use me for a p5.js project -->
+	<script type="text/javascript" src="./js/dungeon_generator.js" DEFER></script>
 	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
+	
 </head>
 <body>
 	<!-- Style this page by changing the CSS in ../css/site.css or css/experiment.css -->
-	<main id="content">
+	<m1ain id="content">
 		<section>
 
 			<h1>Experiment 3 - Alternate Worlds</h1>
@@ -44,18 +46,18 @@
 						<h2>Reflection</h2>
 						<p>Each person that worked on the code should reflect on the process, the difficulties, and the successes of the experiment.</p>
 				</div>
-				<div class="multi-box image">
+				<div class="multi-box">
 					<div class="vertical">
-						<textarea cols="20" rows="20" id="asciiBox" style="opacity: 0.5; letter-spacing: 1ex; width: 320px; margin: 10px; font-family: monospace;"></textarea>
+						<textarea cols="20" rows="20" id="asciiBox" style="opacity: 0.5; letter-spacing: 1ex; line-height: 1em; font-size: small; width: fit-content; margin: 1em; font-family: monospace;"></textarea>
 						<div class="multi-box" style="align-items: center;">
-							<button id="reseed-button">Reseed</button>
+							<button id="reseed-button" style="margin-left: 1em;">Reseed</button>
 							<p id="reseed-report" class="text"></p>
 						</div>
 						<div class="fullscreen-box">
 							<button id="fullscreen">Fullscreen</button>
 						</div>
 					</div>
-					<div id="canvas-container">
+					<div id="canvas-container" class="image" style="border: 0;">
 
 					</div>
 				</div>

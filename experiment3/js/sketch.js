@@ -6,7 +6,9 @@ let seed = 0;
 let tilesetImage;
 let currentGrid = [];
 let numRows, numCols;
-let canvasContainer;
+var canvasContainer;
+var TILE_SIZE = 8;
+var scaleFactor = 2;
 
 function preload() {
   tilesetImage = loadImage(
@@ -15,28 +17,12 @@ function preload() {
 }
 
 function generateGrid(numCols, numRows) {
-    let grid = [];
-    for (let i = 0; i < numRows; i++) {
-      let row = [];
-      for (let j = 0; j < numCols; j++) {
-        row.push("_");
-      }
-      grid.push(row);
-    }
-    
-    return grid;
+    return generateDungeon(numCols, numRows);
 }
   
 function drawGrid(grid) {
     background(128);
-
-    for(let i = 0; i < grid.length; i++) {
-        for(let j = 0; j < grid[i].length; j++) {
-        if (grid[i][j] == '_') {
-            placeTile(i, j, (floor(random(4))), 0);
-        }
-        }
-    }
+    drawDungeon(grid);
 }
 
 function reseed() {
@@ -78,29 +64,43 @@ function stringToGrid(str) {
   return grid;
 }
 
+function resizeScreen() {
+    // Calculate the scale factor
+    console.log("Resizing...");
+    size = floor(min(canvasContainer.width(), canvasContainer.height()) / 2) * 2;
+    let w = size;
+    let h = size;
+    scaleFactor = size / (numCols * TILE_SIZE);
+    console.log("Scale factor: " + scaleFactor);
+    console.log("New width: " + w + ", new height: " + h);
+    resizeCanvas(w, h, false);
+  }
+
 function setup() {
-  numCols = select("#asciiBox").attribute("rows") | 0;
-  numRows = select("#asciiBox").attribute("cols") | 0;
+    numCols = select("#asciiBox").attribute("rows") | 0;
+    numRows = select("#asciiBox").attribute("cols") | 0;
 
-  console.log(select("#asciiBox"))
-  canvasContainer = $("#canvas-container");
-  let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
-  canvas.parent("canvas-container");
-  select("canvas").elt.getContext("2d").imageSmoothingEnabled = false;
+    // resize canvas is the page is resized
+    $(window).resize(function() {
+        resizeScreen();
+    });
 
-  select("#reseed-button").mousePressed(reseed);
-  select("#asciiBox").input(reparseGrid);
+    console.log(select("#asciiBox"))
+    canvasContainer = $("#canvas-container");
+    let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
+    resizeScreen();
+    canvas.parent("canvas-container");
+    select("canvas").elt.getContext("2d").imageSmoothingEnabled = false;
 
-  generateGrid(numCols, numRows);
-  reseed();
+    select("#reseed-button").mousePressed(reseed);
+    select("#asciiBox").input(reparseGrid);
+
+    generateGrid(numCols, numRows);
+    reseed();
 }
 
 
 function draw() {
-  randomSeed(seed);
-  drawGrid(currentGrid);
-}
-
-function placeTile(i, j, ti, tj) {
-  image(tilesetImage, 16 * j, 16 * i, 16, 16, 8 * ti, 8 * tj, 8, 8);
+    randomSeed(seed);
+    drawGrid(currentGrid);
 }
