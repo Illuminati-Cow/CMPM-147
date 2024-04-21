@@ -12,10 +12,14 @@
   align-items: center;
   padding: 0.5em;
   margin: 1em;
-  background-color: var(--bg-color);
+  background: linear-gradient(to bottom, var(--bg-color) 30%, var(--highlight-color) 150%);
   border-bottom: solid .25em var(--highlight-color);
-  border-radius: 10px;
+  border-radius: 20px;
   font-size: larger;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  -ms-border-radius: 20px;
+  -o-border-radius: 20px;
 }
 
 .navbar a {
@@ -101,6 +105,14 @@ a {
   justify-content: space-between;
   flex-wrap: nowrap;
   gap: 2em;
+}
+
+.multi-box > * {
+  flex: 1 1 auto;
+}
+
+.multi-box .vertical {
+  flex-direction: column;
 }
 
 .multi-box .text {

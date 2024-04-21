@@ -11,6 +11,7 @@
 
 	<!-- Include CSS file, including a site-wide CSS and for this particular page -->
 	<link rel="stylesheet" type="text/css" href="../css/site.css">
+	<link rel="stylesheet" type="text/css" href="../css/fonts.css">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 
 	<!-- Load jQuery library -->
@@ -34,11 +35,19 @@
 				<a href="../experiment2/index.html">Experiment 2</a>
 				<a href="../experiment3/index.html">Experiment 3</a>
 			</div>
-			<div class="minor-section">
-				<div class="multi-box">
+			<div class="minor-section multi-box">
+				<div class="text">
+					<h2>Description</h2>
+					<p>What are you trying to acomplish with this experiment?</p>
+						<h2>Technical</h2>
+						<p>Describe in detail what you did technically and how it works?</p>		
+						<h2>Reflection</h2>
+						<p>Each person that worked on the code should reflect on the process, the difficulties, and the successes of the experiment.</p>
+				</div>
+				<div class="multi-box image">
 					<div class="vertical">
 						<textarea cols="20" rows="20" id="asciiBox" style="opacity: 0.5; letter-spacing: 1ex; width: 320px; margin: 10px; font-family: monospace;"></textarea>
-						<div class="multi-box">
+						<div class="multi-box" style="align-items: center;">
 							<button id="reseed-button">Reseed</button>
 							<p id="reseed-report" class="text"></p>
 						</div>
@@ -51,29 +60,7 @@
 					</div>
 				</div>
 			</div>
-
-			<div class="minor-section">
-				<h2>Description</h2>
-				<p>What are you trying to acomplish with this experiment?</p>
-			</div>
-
-			<div class="minor-section">
-				<h2>Technical</h2>
-				<p>Describe in detail what you did technically and how it works?</p>
-			</div>
-
-			<div class="minor-section">
-				<h2>Reflection</h2>
-				<p>Each person that worked on the code should reflect on the process, the difficulties, and the successes of the experiment.</p>
-			</div>
-
 		</section>
-		<nav id="links" class="minor-section">
-			<!-- Put link back to homepage here. -->
-            <ul>
-                <li><a href="../index.html">Home</a></li>
-            </ul>
-		</nav>
 	</main>
 </body>
 </html>
