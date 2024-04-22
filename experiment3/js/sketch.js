@@ -66,14 +66,14 @@ function stringToGrid(str) {
 
 function resizeScreen() {
     // Calculate the scale factor
-    console.log("Resizing...");
-    size = floor(min(canvasContainer.width(), canvasContainer.height()) / 2) * 2;
-    let w = size;
-    let h = size;
-    scaleFactor = size / (numCols * TILE_SIZE);
-    console.log("Scale factor: " + scaleFactor);
-    console.log("New width: " + w + ", new height: " + h);
-    resizeCanvas(w, h, false);
+    // console.log("Resizing...");
+    // size = floor(min(canvasContainer.width(), canvasContainer.height()) / 2) * 2;
+    // let w = size;
+    // let h = size;
+    // scaleFactor = size / (numCols * TILE_SIZE);
+    // console.log("Scale factor: " + scaleFactor);
+    // console.log("New width: " + w + ", new height: " + h);
+    resizeCanvas(512, 512, false);
   }
 
 function setup() {
@@ -87,7 +87,8 @@ function setup() {
 
     console.log(select("#asciiBox"))
     canvasContainer = $("#canvas-container");
-    let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
+    // let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
+    let canvas = createCanvas(512, 512);
     resizeScreen();
     canvas.parent("canvas-container");
     select("canvas").elt.getContext("2d").imageSmoothingEnabled = false;
