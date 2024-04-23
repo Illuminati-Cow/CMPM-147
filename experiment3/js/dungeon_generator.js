@@ -42,6 +42,7 @@ function generateDungeon(x, y) {
     bitCorridors.fill(0);
     bitWalls.fill(0);
     generateRooms();
+    printBitGrid(bitRooms);
     generateCorridors();
     let grid = new Array(x);
     for (let i = 0; i < x; i++) {
@@ -58,7 +59,6 @@ function generateDungeon(x, y) {
       }
       grid[i] = row;
     }
-    printBitGrid(bitRooms);
     return grid;
 }
 
@@ -124,17 +124,30 @@ function createCorridor(room) {
     for (let d = 2; d < 32; d *= 2) {
         let adjacentRoom = findAdjacentRoom(room, d);
         if (adjacentRoom) {
-            let sx = adjacentRoom.sx - room.x > room.w / 2 ? room.x + room.w - 1 : room.x + 1;
-            let sy = adjacentRoom.sy - room.y > room.h / 2 ? room.y + room.h - 1 : room.y + 1;
             let dx = adjacentRoom.dx;
             let dy = adjacentRoom.dy;
-            let dir = {x: Math.sign(dx - sx), y: Math.sign(dy - sy)};
+            let dir = {x: Math.sign(dx - room.x), y: Math.sign(dy - room.y)};
+
+            console.log(`Adjacent room found at (${dx}, ${dy}) with direction (${dir.x}, ${dir.y})`);
+
+            let doorX = dir.x > 0 ? room.x + room.w - 1  : room.x;
+            let doorY = dir.y > 0 ? room.y + room.h - 1 : room.y;
+
+            if (abs(dy - room.y) > abs(dx - room.x)) {  
+                doorX += -dir.x * randi(0, room.w / 2) 
+                console.log(`DoorX: ${doorX}`);
+            }
+            else { 
+                doorY += -dir.y * randi(0, room.h / 2) 
+                console.log(`DoorY: ${doorY}`);
+            }
+
 
             // Create the corridor
-            console.log(`Creating corridor from (${sx}, ${sy}) to (${dx}, ${dy})`);
-            let path = createBitPath(sx, sy, dx, dy);
-            bitCorridors = bitCorridors.map((row, i) => row | (path[i] & ~bitRooms[i]));
-            printBitGrid(path);
+            console.log(`Creating corridor from (${doorX}, ${doorY}) to (${dx}, ${dy})`);
+            let path = createBitPath(doorX, doorY, dx, dy);
+            //bitCorridors = bitCorridors.map((row, i) => row | (path[i] & ~bitRooms[i]));
+            //printBitGrid(path);
             return;
         }
     }
@@ -164,8 +177,7 @@ function createBitmask(start, end) {
 // Copilot
 function createBitPath(x1, y1, x2, y2, obstacles = bitRooms) {
     let path = new Uint32Array(32).fill(0);
-    obstacles[y1] &= ~(1 << x1);
-    obstacles[y2] &= ~(1 << x2);
+    obstacles = [...obstacles];
     let x = x1;
     let y = y1;
     while (gridDist(x, y, x2, y2) > 1) {
@@ -208,9 +220,11 @@ function createBitPath(x1, y1, x2, y2, obstacles = bitRooms) {
         }
 
         let choice = options[0];
+        
         x = choice.nx;
         y = choice.ny;
         path[y] |= 1 << x;
+        print(`Moving to (${x}, ${y})`);
     }
     return path;
 }
