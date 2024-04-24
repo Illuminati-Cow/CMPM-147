@@ -9,6 +9,7 @@ let numRows, numCols;
 var canvasContainer;
 var TILE_SIZE = 8;
 var scaleFactor = 2;
+var mode = "dungeon"; // "dungeon" or "world"
 
 function preload() {
   tilesetImage = loadImage(
@@ -17,12 +18,18 @@ function preload() {
 }
 
 function generateGrid(numCols, numRows) {
-    return generateDungeon(numCols, numRows);
+    if (mode === "dungeon")
+      return generateDungeon(numCols, numRows);
+    else if (mode === "world")
+      return generateWorld(numCols, numRows);
 }
   
 function drawGrid(grid) {
     background(128);
-    drawDungeon(grid);
+    if (mode === "dungeon")
+      drawDungeon(grid);
+    else if (mode === "world")
+      drawWorld(grid);
 }
 
 function reseed() {
@@ -95,6 +102,16 @@ function setup() {
 
     select("#reseed-button").mousePressed(reseed);
     select("#asciiBox").input(reparseGrid);
+    select("#mode").mousePressed(toggleMode);
+
+    function toggleMode() {
+      if (mode === "dungeon") {
+        mode = "world";
+      } else if (mode === "world") {
+        mode = "dungeon";
+      }
+      regenerateGrid();
+    }
 
     generateGrid(numCols, numRows);
     reseed();

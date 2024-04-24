@@ -1,10 +1,16 @@
 var tileCodes = {
     empty: ".",
-    wall: "=",
-    floor: "#"
+    floor: "#",
+    door: "+",
+    water: "~",
+    mud: "-",
+    shrub: "*",
+    tree: "t",
+    mountain: "^",
 };
 
 var tiles = {};
+var lookup = {};
 
 class Room {
     constructor(x, y, w, h) {
@@ -27,38 +33,64 @@ const ROOM_MAX_COUNT = 10;
 
 for (let code in tileCodes) {
     tiles[tileCodes[code]] = {};
+    lookup[tileCodes[code]] = {};
+    // w prefix for world tiles to avoid conflicts with dungeon tiles
+    lookup[tileCodes["w" + code]] = {};
 }
 
-tiles[tileCodes.empty].x = 0;
-tiles[tileCodes.empty].y = 22;
-tiles[tileCodes.wall].x = 0;
-tiles[tileCodes.wall].y = 0;
-tiles[tileCodes.floor].x = 0;
-tiles[tileCodes.floor].y = 23;
+// Randomized tiles
+lookup[tileCodes.empty] = {x1: 1, y1: 21, x2: 1, y2: 21};
+lookup["w"+tileCodes.empty] = {x1: 0, y1: 3, x2: 3, y2: 3};
+lookup[tileCodes.floor] = {x1: 0, y1: 15, x2: 3, y2: 15};
+lookup[tileCodes.door] = {x1: 6, y1: 25, x2: 7, y2: 27};
+lookup["w"+tileCodes.water] = {x1: 0, y1: 13, x2: 3, y2: 13};
+lookup["w"+tileCodes.shrub] = {x1: 1, y1: 7, x2: 1, y2: 8};
+
+// Logic tiles
+// 4 24
+// x1: 5, y1: 21, x2: 7, y2: 21
+lookup[tileCodes.empty][tileCodes.floor] = {
+    1: {x: 1, y: 21}, 2: {x: 2, y: 21}, 4: {x: 3, y: 21},
+    8: {x: 3, y: 21}, 16: {x: 3, y: 23},
+    32: {x: 1, y: 23}, 64: {x: 2, y: 23}, 128: {x: 3, y: 23}
+};
+lookup[tileCodes.mud][tileCodes.water] = {
+    1: {x: 9, y: 15}, 2: {x: 10, y: 15}, 4: {x: 11, y: 15},
+    8: {x: 9, y: 16}, 16: {x: 11, y: 16},
+    32: {x: 9, y: 17}, 64: {x: 10, y: 17}, 128: {x: 11, y: 17}
+};
+
+
 
 function generateDungeon(x, y) {
+    tiles[tileCodes.empty].x = 0;
+    tiles[tileCodes.empty].y = 22;
+    tiles[tileCodes.floor].x = 0;
+    tiles[tileCodes.floor].y = 23;
     bitRooms.fill(0);
     bitRoomPlacement.fill(0);
     bitCorridors.fill(0);
     bitWalls.fill(0);
     rooms = [];
-    generateRooms();
-    printBitGrid(bitRooms);
-    generateCorridors();
     let grid = new Array(x);
     for (let i = 0; i < x; i++) {
-      let row = new Array(y);
-      for (let j = 0; j < y; j++) {
-        if (bitRooms[i] & (1 << j)) {
-            row[j] = tileCodes.floor;
-        } else if (bitCorridors[i] & (1 << j)) {
-            row[j] = tileCodes.floor;
-        } else {
+        let row = new Array(y);
+        for (let j = 0; j < y; j++) {
             row[j] = tileCodes.empty;
         }
-
-      }
-      grid[i] = row;
+        grid[i] = row;
+    }
+    generateRooms(grid);
+    printBitGrid(bitRooms);
+    generateCorridors(grid);
+    for (let i = 0; i < grid.length; i++) {
+        for (let j = 0; j < grid[i].length; j++) {
+            if (grid[i][j] === tileCodes.door) { continue; }
+            if (bitRooms[i] & 1 << j)
+                grid[i][j] = tileCodes.floor;
+            if (bitCorridors[i] & 1 << j)
+                grid[i][j] = tileCodes.floor;
+        }
     }
     return grid;
 }
@@ -82,20 +114,53 @@ function drawDungeon(grid) {
     for (let i = 0; i < grid.length; i++) {
         for (let j = 0; j < grid[i].length; j++) {
             let tile = tiles[grid[i][j]];
-            placeTile(i, j, tile.x, tile.y);
+            if (grid[i][j] === tileCodes.empty) {
+                let code = neighborCode(grid, i, j, tileCodes.floor);
+                let tile = null;
+                if (code === 0) {
+                    tile = tiles[tileCodes.empty]
+                    placeTile(i, j, tile.x, tile.y);
+                }
+                else {
+                    tile = tiles[tileCodes.floor];
+                    placeTile(i, j, tile.x, tile.y);
+                    tile = lookup[tileCodes.empty][tileCodes.floor][code];
+                    placeTile(i, j, tile.x, tile.y);
+                }
+            }
+            else if (grid[i][j] === tileCodes.floor) {
+                tile = lookup[tileCodes.floor];
+                placeTile(i, j, randi(tile.x1, tile.x2 + 1), randi(tile.y1, tile.y2 + 1));
+            }
+            else if (grid[i][j] === tileCodes.door) {
+                tile = lookup[tileCodes.door];
+                placeTile(i, j, randi(tile.x1, tile.x2 + 1), randi(tile.y1, tile.y2 + 1));
+            }
+            else {
+                placeTile(i, j, tile.x, tile.y);
+            }
         }
     }
 }
 
-function generateRooms() {
+function neighborCode(grid, i, j, tile) {
+    let code = 0;
+    if (i > 0 && grid[i - 1][j] === tile) code += 2;
+    else if (j < grid[i].length - 1 && grid[i][j + 1] === tile) code += 8;
+    else if (i < grid.length - 1 && grid[i + 1][j] === tile) code += 64;
+    else if (j > 0 && grid[i][j - 1] === tile) code += 16;
+    return code;
+}
+
+function generateRooms(grid) {
     let numRooms = floor(random(ROOM_MIN_COUNT, ROOM_MAX_COUNT));
     for (let i = 0; i < numRooms; i++) {
-        rooms.push(createRoom());
+        rooms.push(createRoom(grid));
     }
     console.log(rooms);
 }
 
-function createRoom() {
+function createRoom(grid) {
     let x, y, w, h;
     let loopGuard = 0;
     do {
@@ -116,19 +181,18 @@ function createRoom() {
     return new Room(x, y, w, h);
 }
 
-function generateCorridors() {
+function generateCorridors(grid) {
     let sortedRooms = sortRoomsByDistance(rooms);
     for (let i = 1; i < sortedRooms.length; i++) {
-        createCorridor(sortedRooms[i - 1], sortedRooms[i]);
+        createCorridor(sortedRooms[i - 1], sortedRooms[i], grid);
     }
 }
 
-function createCorridor(room, destRoom) {
+function createCorridor(room, destRoom, grid) {
     let x = clamp32(room.x + floor(room.w / 2));
     let y = clamp32(room.y + floor(room.h / 2));
     let dx = clamp32(destRoom.x + floor(destRoom.w / 2));
     let dy = clamp32(destRoom.y + floor(destRoom.h / 2));
-    let dir = {x: Math.sign(dx - x), y: Math.sign(dy - y)};
 
     let doors = { pointA: null, pointB: null };
     doors.pointA = findClosestPoints(room, destRoom).pointA;
@@ -138,7 +202,8 @@ function createCorridor(room, destRoom) {
     console.log(`Creating corridor from (${doors.pointA.x}, ${doors.pointA.y}) to (${doors.pointB.x}, ${doors.pointB.x})`);
     let path = createBitPath(doors.pointA.x, doors.pointA.y, doors.pointB.x, doors.pointB.y);
     bitCorridors = bitCorridors.map((row, i) => row | (path[i] & ~bitRooms[i]));
-    // printBitGrid(path);
+    grid[doors.pointA.y][doors.pointA.x] = tileCodes.door;
+    //grid[doors.pointB.y][doors.pointB.x] = tileCodes.door;
     return;
 }
 
