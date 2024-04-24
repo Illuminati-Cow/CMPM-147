@@ -30,17 +30,18 @@ for (let code in tileCodes) {
 }
 
 tiles[tileCodes.empty].x = 0;
-tiles[tileCodes.empty].y = 23;
+tiles[tileCodes.empty].y = 22;
 tiles[tileCodes.wall].x = 0;
 tiles[tileCodes.wall].y = 0;
 tiles[tileCodes.floor].x = 0;
-tiles[tileCodes.floor].y = 24;
+tiles[tileCodes.floor].y = 23;
 
 function generateDungeon(x, y) {
     bitRooms.fill(0);
     bitRoomPlacement.fill(0);
     bitCorridors.fill(0);
     bitWalls.fill(0);
+    rooms = [];
     generateRooms();
     printBitGrid(bitRooms);
     generateCorridors();
@@ -91,6 +92,7 @@ function generateRooms() {
     for (let i = 0; i < numRooms; i++) {
         rooms.push(createRoom());
     }
+    console.log(rooms);
 }
 
 function createRoom() {
@@ -115,42 +117,29 @@ function createRoom() {
 }
 
 function generateCorridors() {
-    for (let room of rooms) {
-        createCorridor(room);        
+    let sortedRooms = sortRoomsByDistance(rooms);
+    for (let i = 1; i < sortedRooms.length; i++) {
+        createCorridor(sortedRooms[i - 1], sortedRooms[i]);
     }
 }
 
-function createCorridor(room) { 
-    for (let d = 2; d < 32; d *= 2) {
-        let adjacentRoom = findAdjacentRoom(room, d);
-        if (adjacentRoom) {
-            let dx = adjacentRoom.dx;
-            let dy = adjacentRoom.dy;
-            let dir = {x: Math.sign(dx - room.x), y: Math.sign(dy - room.y)};
+function createCorridor(room, destRoom) {
+    let x = clamp32(room.x + floor(room.w / 2));
+    let y = clamp32(room.y + floor(room.h / 2));
+    let dx = clamp32(destRoom.x + floor(destRoom.w / 2));
+    let dy = clamp32(destRoom.y + floor(destRoom.h / 2));
+    let dir = {x: Math.sign(dx - x), y: Math.sign(dy - y)};
 
-            console.log(`Adjacent room found at (${dx}, ${dy}) with direction (${dir.x}, ${dir.y})`);
+    let doors = { pointA: null, pointB: null };
+    doors.pointA = findClosestPoints(room, destRoom).pointA;
+    doors.pointB = findClosestPoints(destRoom, room).pointA;
 
-            let doorX = dir.x > 0 ? room.x + room.w - 1  : room.x;
-            let doorY = dir.y > 0 ? room.y + room.h - 1 : room.y;
-
-            if (abs(dy - room.y) > abs(dx - room.x)) {  
-                doorX += -dir.x * randi(0, room.w / 2) 
-                console.log(`DoorX: ${doorX}`);
-            }
-            else { 
-                doorY += -dir.y * randi(0, room.h / 2) 
-                console.log(`DoorY: ${doorY}`);
-            }
-
-
-            // Create the corridor
-            console.log(`Creating corridor from (${doorX}, ${doorY}) to (${dx}, ${dy})`);
-            let path = createBitPath(doorX, doorY, dx, dy);
-            //bitCorridors = bitCorridors.map((row, i) => row | (path[i] & ~bitRooms[i]));
-            //printBitGrid(path);
-            return;
-        }
-    }
+    // Create the corridor
+    console.log(`Creating corridor from (${doors.pointA.x}, ${doors.pointA.y}) to (${doors.pointB.x}, ${doors.pointB.x})`);
+    let path = createBitPath(doors.pointA.x, doors.pointA.y, doors.pointB.x, doors.pointB.y);
+    bitCorridors = bitCorridors.map((row, i) => row | (path[i] & ~bitRooms[i]));
+    // printBitGrid(path);
+    return;
 }
 
 
@@ -177,10 +166,13 @@ function createBitmask(start, end) {
 // Copilot
 function createBitPath(x1, y1, x2, y2, obstacles = bitRooms) {
     let path = new Uint32Array(32).fill(0);
+    let visited = new Uint32Array(32).fill(0);
     obstacles = [...obstacles];
     let x = x1;
     let y = y1;
+    let stack = [];
     while (gridDist(x, y, x2, y2) > 1) {
+        visited[y] |= 1 << x;
         openDirs = {n: false, s: false, e: false, w: false};
         if (x + 1 < 32 && !(obstacles[y] & (1 << (x + 1)))) { openDirs.e = true; }
         if (x - 1 >= 0 && !(obstacles[y] & (1 << (x - 1)))) { openDirs.w = true; }
@@ -191,7 +183,6 @@ function createBitPath(x1, y1, x2, y2, obstacles = bitRooms) {
             if (!openDirs[dir]) { continue; }
             let nx = x;
             let ny = y;
-            let oDistance = gridDist(x, y, x2, y2);
             switch (dir) {
                 case "n":
                     ny--;
@@ -206,17 +197,34 @@ function createBitPath(x1, y1, x2, y2, obstacles = bitRooms) {
                     nx--;
                     break;
             }
+            if (visited[ny] & 1 << nx) { continue; }    
             let nDistance = gridDist(nx, ny, x2, y2);
-            if (nDistance < oDistance) {
-                options.unshift({dir, nx, ny});
-            } else {
-                options.push({dir, nx, ny});
+            if (options.length == 0) { options.push({nx, ny, distance: nDistance}); }
+            else {
+                for (let i = 0; i < options.length; i++) {
+                    if (nDistance < options[i].distance) {
+                        options.splice(i, 0, {nx, ny, distance: nDistance});
+                        break;
+                    } else if (i == options.length - 1) {
+                        options.push({nx, ny, distance: nDistance});
+                        break;
+                    }
+                }
             }
         }
 
         if (options.length == 0) {
-            console.log(`No open directions from (${x}, ${y}) to (${x2}, ${y2})`);
-            return path;
+            if (stack.length == 0) {
+                console.log(`No open directions from (${x}, ${y}) to (${x2}, ${y2})`);
+                return path.fill(0);
+            }
+            obstacles[y] |= 1 << x;
+            // console.log(`Backtracking to (${x}, ${y})`);
+            path[y] &= x - 1;
+            let prev = stack.pop();
+            x = prev.x;
+            y = prev.y;
+            continue;
         }
 
         let choice = options[0];
@@ -224,7 +232,8 @@ function createBitPath(x1, y1, x2, y2, obstacles = bitRooms) {
         x = choice.nx;
         y = choice.ny;
         path[y] |= 1 << x;
-        print(`Moving to (${x}, ${y})`);
+        stack.push({x, y});
+        // print(`Moving to (${x}, ${y})`);
     }
     return path;
 }
@@ -275,100 +284,62 @@ function printBitGrid(bitGrid) {
     }
 }
 
-function scanRow(x, y, bitGrid) {
-    let row = bitGrid[y];
-    let e = x + 1;
-    let w = x - 1;
-    while (w >= 0 || e < 32) {
-        if (w >= 0 && row & (1 << w)) { return w; } else { w--; }
-        if (e < 32 && row & (1 << e)) { return e; } else { e++; }
-    }
-    return false;
-}
 
-function scanColumn(x, y, bitGrid) {
-    let hmask = (1 << x)
-    let s = y + 1;
-    let n = y - 1;
-    while (n >= 0 || s < 32) {
-        if (n >= 0 && bitGrid[n] & hmask) { return n; } else { n--; }
-        if (s < 32 && bitGrid[s] & hmask) { return s; } else { s++; }
-    }
-    return false;
-}
+// Copilot - modified
+function sortRoomsByDistance(rooms) {    
+    // Calculate distances between all pairs of rooms
+    let distances = [];
+    for (let i = 0; i < rooms.length; i++) {
+        distances[i] = [];
+        for (let j = 0; j < rooms.length; j++) {
+            let roomA = rooms[i];
+            let roomB = rooms[j];
+            let closestPoints = { pointA: null, pointB: null };
+            closestPoints.pointA = findClosestPoints(roomA, roomB).pointA;
+            closestPoints.pointB = findClosestPoints(roomB, roomA).pointA;
 
-
-/**
- * Finds the adjacent room to the given room in the dungeon grid.
- * 
- * @returns {Object} - The adjacent room object with its coordinates.
- * {sx, sy, dx, dy} - The source and destination coordinates of the corridor.
- */
-function findAdjacentRoom(room, maxDistance = 10000) {
-    // Create a masked grid with the current room removed
-    let maskedGrid = [...bitRooms];
-    setRoomMask(room.x, room.y, room.w, room.h, maskedGrid, true);
-
-    // If room width is even, check for corridor along the off-center row
-    if (room.w % 2 == 0) {
-        let x = ceil(room.x + room.w / 2)
-        let y = scanColumn(x, room.y, maskedGrid);
-        if (y && gridDist(room.x, room.y, x, y) <= maxDistance) {
-            return {sx: x, sy: room.y, dx: x, dy: y};
+            let distance = gridDist(closestPoints.pointA.x, closestPoints.pointA.y, closestPoints.pointB.x, closestPoints.pointB.y);
+            distances[i][j] = { room: roomB, distance: distance };
         }
     }
 
-    // If room height is even, check for corridor along the off-center column
-    if (room.h % 2 == 0) {
-        let y = ceil(room.y + room.h / 2)
-        let x = scanRow(room.x, y, maskedGrid);
-        if (x && gridDist(room.x, room.y, x, y) <= maxDistance) {
-            return {sx: room.x, sy: y, dx: x, dy: y};
-        }
-    }
+    // Create a copy of the distances array
+    let remainingDistances = [...distances];
 
-    // Check for room within rows and cols of room
-    let x1, y1, x2, y2;
-    x1 = floor(room.x + room.w / 2);
-    y1 = floor(room.y + room.h / 2);
-    x2 = x1;
-    y2 = y1;
+    // Start with the first room as the current room
+    let currentRoom = 0;
+    let visitedRooms = [rooms[0]];
 
-    while (x1 >= 0 || x2 < 32) {
-        if (x1 >= 0) {
-            let y = scanColumn(x1, room.y, maskedGrid);
-            if (y && gridDist(x1, room.y, x1, y) <= maxDistance) {
-                return {sx: x1, sy: room.y, dx: x1, dy: y};
+    // Iterate until all rooms have been visited
+    while (visitedRooms.length < distances.length) {
+        let closestDistance = Infinity;
+        let closestRoom = null;
+        let closestIndex = -1;
+
+        // Find the nearest room from the current room
+        for (let i = 0; i < remainingDistances[currentRoom].length; i++) {
+            let distance = remainingDistances[currentRoom][i].distance;
+            let room = remainingDistances[currentRoom][i].room;
+
+            // If the distance is smaller than the current closest distance and the room has not been visited yet, update the closest room
+            if (distance < closestDistance && !visitedRooms.includes(room)) {
+                closestDistance = distance;
+                closestRoom = room;
+                closestIndex = i;
             }
-            x1--;
         }
-        if (x2 < 32) {
-            let y = scanColumn(x2, room.y, maskedGrid);
-            if (y && gridDist(x2, room.y, x2, y) <= maxDistance) {
-                return {sx: x2, sy: room.y, dx: x2, dy: y};
-            }
-            x2++;
-        }
+
+        // Add the closest room to the visited rooms and update the current room
+        visitedRooms.push(closestRoom);
+        currentRoom = closestIndex;
     }
 
-    while (y1 >= 0 || y2 < 32) {
-        if (y1 >= 0) {
-            let x = scanRow(room.x, y1, maskedGrid);
-            if (x && gridDist(room.x, y1, x, y1) <= maxDistance) {
-                return {sx: room.x, sy: y1, dx: x, dy: y1};
-            }
-            y1--;
-        }
-        if (y2 < 32) {
-            let x = scanRow(room.x, y2, maskedGrid);
-            if (x && gridDist(room.x, y2, x, y2) <= maxDistance) {
-                return {sx: room.x, sy: y2, dx: x, dy: y2};
-            }
-            y2++;
-        }
-    }
+    // Print the path
+    console.log("Visited rooms:", visitedRooms);
+    let path = visitedRooms.map(room => `(${room.x}, ${room.y})`);
+    console.log("Path:", path);
 
-    return false;
+    return visitedRooms;
 }
 
 function gridDist(x1, y1, x2, y2) {
@@ -377,4 +348,26 @@ function gridDist(x1, y1, x2, y2) {
 
 function clamp(x, min, max) {
     return Math.min(Math.max(x, min), max);
+}
+
+function findClosestPoints(roomA, roomB) {
+    let closestDistance = Infinity;
+    let closestPoints = { pointA: null, pointB: null };
+
+    // Iterate over all points in roomA
+    for (let i = roomA.x; i < clamp32(roomA.x + roomA.w); i++) {
+        for (let j = roomA.y; j < clamp32(roomA.y + roomA.h); j++) {
+            // Calculate the distance between the current point and roomB
+            let distance = gridDist(i, j, roomB.x, roomB.y);
+
+            // If the distance is smaller than the current closest distance, update the closest points
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestPoints.pointA = { x: i, y: j };
+                closestPoints.pointB = { x: roomB.x, y: roomB.y };
+            }
+        }
+    }
+
+    return closestPoints;
 }
