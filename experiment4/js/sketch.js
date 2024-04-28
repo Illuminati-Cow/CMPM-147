@@ -1,52 +1,93 @@
-// sketch.js - purpose and description here
-// Author: Jaxon Ruiz and Cole Falxa-Sturken
+"use strict";
 
-// Date:
+/* global XXH */
+/* exported --
+    p3_preload
+    p3_setup
+    p3_worldKeyChanged
+    p3_tileWidth
+    p3_tileHeight
+    p3_tileClicked
+    p3_drawBefore
+    p3_drawTile
+    p3_drawSelectedTile
+    p3_drawAfter
+*/
 
-// Here is how you might set up an OOP p5.js project
-// Note that p5.js looks for a file called sketch.js
+function p3_preload() {}
 
-// Constants - User-servicable parts
-// In a longer project I like to put these in a separate file
-const VALUE1 = 1;
-const VALUE2 = 2;
-const FRAMERATE = 20
+function p3_setup() {}
 
-// Globals
-let canvasContainer;
-var centerHorz, centerVert;
+let worldSeed;
 
-function resizeScreen() {
-  centerHorz = canvasContainer.width() / 2; // Adjusted for drawing logic
-  centerVert = canvasContainer.height() / 2; // Adjusted for drawing logic
-  console.log("Resizing...");
-  resizeCanvas(canvasContainer.width(), canvasContainer.height());
-  // redrawCanvas(); // Redraw everything based on new size
+function p3_worldKeyChanged(key) {
+  worldSeed = XXH.h32(key, 0);
+  noiseSeed(worldSeed);
+  randomSeed(worldSeed);
 }
 
-// setup() function is called once when the program starts
-function setup() {
-  // place our canvas, making it fit our container
-  canvasContainer = $("#canvas-container");
-  let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
-  canvas.parent("canvas-container");
-  // resize canvas is the page is resized
-  $(window).resize(function() {
-    resizeScreen();
-  });
-  resizeScreen();
-
-  // Set Framerate
-  frameRate(FRAMERATE);
+function p3_tileWidth() {
+  return 32;
+}
+function p3_tileHeight() {
+  return 16;
 }
 
-// draw() function is called repeatedly, it's the main animation loop
-function draw() {
-  background(220);
+let [tw, th] = [p3_tileWidth(), p3_tileHeight()];
+
+let clicks = {};
+
+function p3_tileClicked(i, j) {
+  let key = [i, j];
+  clicks[key] = 1 + (clicks[key] | 0);
+}
+
+function p3_drawBefore() {}
+
+function p3_drawTile(i, j) {
   noStroke();
+
+  if (XXH.h32("tile:" + [i, j], worldSeed) % 4 == 0) {
+    fill(240, 200);
+  } else {
+    fill(255, 200);
+  }
+
+  push();
+
+  beginShape();
+  vertex(-tw, 0);
+  vertex(0, th);
+  vertex(tw, 0);
+  vertex(0, -th);
+  endShape(CLOSE);
+
+  let n = clicks[[i, j]] | 0;
+  if (n % 2 == 1) {
+    fill(0, 0, 0, 32);
+    ellipse(0, 0, 10, 5);
+    translate(0, -10);
+    fill(255, 255, 100, 128);
+    ellipse(0, 0, 10, 10);
+  }
+
+  pop();
 }
 
-// mousePressed() function is called once after every time a mouse button is pressed
-function mousePressed() {
-    // code to run when mouse is pressed
+function p3_drawSelectedTile(i, j) {
+  noFill();
+  stroke(0, 255, 0, 128);
+
+  beginShape();
+  vertex(-tw, 0);
+  vertex(0, th);
+  vertex(tw, 0);
+  vertex(0, -th);
+  endShape(CLOSE);
+
+  noStroke();
+  fill(0);
+  text("tile " + [i, j], 0, 0);
 }
+
+function p3_drawAfter() {}
