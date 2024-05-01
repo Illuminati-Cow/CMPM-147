@@ -2,7 +2,6 @@
 
 /* global p5 */
 /* exported preload, setup, draw, mouseClicked */
-
 // Project base code provided by {amsmith,ikarth}@ucsc.edu
 
 
@@ -13,6 +12,12 @@ let tile_height_step_main; // A height step is half a tile's height
 let tile_rows, tile_columns;
 let camera_offset;
 let camera_velocity;
+let instanceCount = 0;
+var tileTypes = {};
+var baseColor;
+var noiseScale = 0.1;
+var noiseLevel = 2;
+var cameraZoom = 1;
 
 /////////////////////////////
 // Transforms between coordinate systems
@@ -60,43 +65,95 @@ function preload() {
     window.p3_preload();
   }
 }
+
+function generateTileData([x, y]) {
+    let noise = noiseLevel * pg.noise(x * noiseScale, y * noiseScale);
+    //console.log(noise);
+    if (noise > 0.75) {
+        return tileTypes.ground;
+    }
+    else {
+        return tileTypes.stone;
+    }
+}
+
 let p0 = new p5((sketch) => {
+
     sketch.setup = () => {
         let canvasContainer = $("#canvas-container");
         let canvas = sketch.createCanvas(800, 400);
         canvas.parent("canvas-container");
         sketch.select("canvas").elt.getContext("2d").imageSmoothingEnabled = false;
 
-    camera_offset = new p5.Vector(-sketch.width / 2, sketch.height / 2);
-    camera_velocity = new p5.Vector(0, 0);
+        camera_offset = new p5.Vector(-sketch.width / 2, sketch.height / 2);
+        camera_velocity = new p5.Vector(0, 0);
 
-    if (window.p3_setup) {
-        window.p3_setup();
-    }
+        canvas.mouseWheel((event) => {
+            let dy = event.deltaY;
+            let oldZoom = cameraZoom;
+            cameraZoom += -Math.sign(dy) * 0.1;
+            cameraZoom = Math.max(0.25, cameraZoom);
+            cameraZoom = Math.min(7, cameraZoom);
+            if (oldZoom == cameraZoom)
+                return false;
+            tile_width_step_main = tileWidth * cameraZoom;
+            tile_height_step_main = tileHeight * cameraZoom;
+            tile_columns = Math.ceil(sketch.width / (tile_width_step_main * 2));
+            tile_rows = Math.ceil(sketch.height / (tile_height_step_main * 2));
+            camera_offset.x *= cameraZoom / oldZoom;
+            camera_offset.y *= cameraZoom / oldZoom;
+        })
 
-    let label = sketch.createP();
-    label.html("World key: ");
-    label.parent("container");
+        if (window.p3_setup) {
+            window.p3_setup();
+        }
 
-    let input = sketch.createInput("xyzzy");
-    input.parent(label);
-    input.input(() => {
+        let label = sketch.createP();
+        label.html("World key: ");
+        label.parent("container");
+
+        let input = sketch.createInput("xyzzy");
+        input.parent(label);
+        input.input(() => {
+            rebuildWorld(input.value());
+        });
+
+        tileTypes = {
+            stone: {
+                upFaceColor: sketch.color("hsl(0, 0%, 59%)"),
+                westFaceColor: sketch.color("hsl(20, 7%, 36%)"),
+                southFaceColor: sketch.color("hsl(20, 7%, 41%)"),
+                description: "Stone",
+            },
+            ground: {
+                upFaceColor: sketch.color("hsl(20, 7%, 51%)"),
+                westFaceColor: sketch.color("hsl(20, 7%, 51%)"),
+                southFaceColor: sketch.color("hsl(20, 7%, 47%)"),
+                description: "Ground",
+            },
+            gold: {
+                upFaceColor: sketch.color("hsl(44, 65%, 68%)"),
+                westFaceColor: sketch.color("hsl(44, 65%, 48%)"),
+                southFaceColor: sketch.color("hsl(44, 65%, 52%)"),
+                description: "Gold",
+            },
+        };
+
+        baseColor = sketch.color("hsl(20, 7%, 36%)");
+        
+        sketch.createP("Arrow keys scroll. Clicking changes tiles.").parent("container");
+        sketch.noiseDetail(1, 0.25);
         rebuildWorld(input.value());
-    });
-
-    sketch.createP("Arrow keys scroll. Clicking changes tiles.").parent("container");
-
-    rebuildWorld(input.value());
     }
 
     function rebuildWorld(key) {
-    if (window.p3_worldKeyChanged) {
-        window.p3_worldKeyChanged(key);
-    }
-    tile_width_step_main = window.p3_tileWidth ? window.p3_tileWidth() : 32;
-    tile_height_step_main = window.p3_tileHeight ? window.p3_tileHeight() : 14.5;
-    tile_columns = Math.ceil(sketch.width / (tile_width_step_main * 2));
-    tile_rows = Math.ceil(sketch.height / (tile_height_step_main * 2));
+        if (window.p3_worldKeyChanged) {
+            window.p3_worldKeyChanged(key);
+        }
+        tile_width_step_main = window.p3_tileWidth ? window.p3_tileWidth() : 32;
+        tile_height_step_main = window.p3_tileHeight ? window.p3_tileHeight() : 16;
+        tile_columns = Math.ceil(sketch.width / (tile_width_step_main * 2));
+        tile_rows = Math.ceil(sketch.height / (tile_height_step_main * 2));
     }
 
     sketch.mouseClicked = () => {
@@ -125,7 +182,6 @@ let p0 = new p5((sketch) => {
     if (sketch.keyIsDown(sketch.UP_ARROW)) {
         camera_velocity.y += 1;
     }
-
     let camera_delta = new p5.Vector(0, 0);
     camera_velocity.add(camera_delta);
     camera_offset.add(camera_velocity);
@@ -148,26 +204,24 @@ let p0 = new p5((sketch) => {
 
     let overdraw = 0.1;
 
-    let y0 = Math.floor((0 - overdraw) * tile_rows);
-    let y1 = Math.floor((1 + overdraw) * tile_rows);
-    let x0 = Math.floor((0 - overdraw) * tile_columns);
-    let x1 = Math.floor((1 + overdraw) * tile_columns);
+    let y0 = Math.min(Math.floor((0 - overdraw) * tile_rows), -20);
+    let y1 = Math.max(Math.floor((1 + overdraw) * tile_rows), 20);
+    let x0 = Math.min(Math.floor((0 - overdraw) * tile_columns), -20);
+    let x1 = Math.max(Math.floor((1 + overdraw) * tile_columns), 20);
 
     for (let y = y0; y < y1; y++) {
         for (let x = x0; x < x1; x++) {
-        drawTile(tileRenderingOrder([x + world_offset.x, y - world_offset.y]), [
-            camera_offset.x,
-            camera_offset.y
-        ]); // odd row
+            let key = tileRenderingOrder([x + world_offset.x, y - world_offset.y]);
+            drawTile(key, [
+                camera_offset.x, camera_offset.y]
+            ); // odd row
         }
         for (let x = x0; x < x1; x++) {
-        drawTile(
-            tileRenderingOrder([
-            x + 0.5 + world_offset.x,
-            y + 0.5 - world_offset.y
-            ]),
-            [camera_offset.x, camera_offset.y]
-        ); // even rows are offset horizontally
+            let key = tileRenderingOrder([x + 0.5 + world_offset.x, y + 0.5 - world_offset.y]);
+            drawTile(
+                key,
+                [camera_offset.x, camera_offset.y]
+            ); // even rows are offset horizontally
         }
     }
 
@@ -180,33 +234,33 @@ let p0 = new p5((sketch) => {
 
     // Display a discription of the tile at world_x, world_y.
     function describeMouseTile([world_x, world_y], [camera_x, camera_y]) {
-    let [screen_x, screen_y] = worldToScreen(
-        [world_x, world_y],
-        [camera_x, camera_y]
-    );
-    drawTileDescription([world_x, world_y], [0 - screen_x, screen_y]);
+        let [screen_x, screen_y] = worldToScreen(
+            [world_x, world_y],
+            [camera_x, camera_y]
+        );
+        drawTileDescription([world_x, world_y], [0 - screen_x, screen_y]);
     }
 
     function drawTileDescription([world_x, world_y], [screen_x, screen_y]) {
-    sketch.push();
-    sketch.translate(screen_x, screen_y);
-    if (window.p3_drawSelectedTile) {
-        window.p3_drawSelectedTile(world_x, world_y, screen_x, screen_y);
-    }
-    sketch.pop();
+        sketch.push();
+        sketch.translate(screen_x, screen_y);
+        if (window.p3_drawSelectedTile) {
+            window.p3_drawSelectedTile(world_x, world_y, generateTileData(tileRenderingOrder([world_x, world_y])));
+        }
+        sketch.pop();
     }
 
     // Draw a tile, mostly by calling the user's drawing code.
     function drawTile([world_x, world_y], [camera_x, camera_y]) {
-    let [screen_x, screen_y] = worldToScreen(
-        [world_x, world_y],
-        [camera_x, camera_y]
-    );
-    sketch.push();
-    sketch.translate(0 - screen_x, screen_y);
-    if (window.p3_drawTile) {
-        window.p3_drawTile(world_x, world_y, -screen_x, screen_y);
-    }
-    sketch.pop();
+        let [screen_x, screen_y] = worldToScreen(
+            [world_x, world_y],
+            [camera_x, camera_y]
+        );
+        sketch.push();
+        sketch.translate(0 - screen_x, screen_y);
+        if (window.p3_drawTile) {
+            window.p3_drawTile(world_x, world_y, generateTileData([world_x, world_y]));
+        }
+        sketch.pop();
     }
 });
