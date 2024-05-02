@@ -7,7 +7,7 @@ class Dwarf {
     static clanKnowledge = {};
     static easystar = new EasyStar.js();
     static searchRadius = 30;
-    static updateInterval = 1000;
+    static updateInterval = 250;
     static sightRadius = 20;
     static _ = (() => {
         fetch("./js/dwarfNames.json")
@@ -35,7 +35,7 @@ class Dwarf {
         this.target = null;
         this.path = null;
         this.lastUpdate = p0.millis();
-        Dwarf.easystar.setIterationsPerCalculation(1000);
+        //Dwarf.easystar.setIterationsPerCalculation(1000);
     };
 
     draw() {
@@ -67,20 +67,20 @@ class Dwarf {
         this.seeNearbyOres();
         this.learn(...surroundingTiles);
         if (this.state === "searching") {
-            Dwarf.easystar.calculate();
+            Dwarf.easystar.calculate(10000);
         }
         else if (this.state === "idle") {	
             if (surroundingTiles.some(tile => tile.type == "ore")) {
                 let tile = surroundingTiles.find(tile => tile.type == "ore");
                 this.path = null;
+                this.learn(...this.identifyVein(tile));
                 this.mine(tile, true);
-                this.learn(...this.identifyVein(this.position));
             }
             else if (this.recall("ore").some(tile => this.distanceTo(tile) < Dwarf.searchRadius)) {
                 this.changeState("pathfinding");
                 this.path = null;
                 this.target = this.recall("ore").find(tile => this.distanceTo(tile) < Dwarf.searchRadius);
-                console.log("Found ore vein at " + this.target.x + ", " + this.target.y + " " + this.target.type);
+                this.unlearn(this.target);
             }
             else {
                 let tiles = surroundingTiles;
@@ -104,30 +104,30 @@ class Dwarf {
         }
         else if (this.state === "pathfinding") {
             if (this.path === null) {
-            // Create a grid for the pathfinding algorithm
-            Dwarf.easystar.setGrid(Dwarf.createGrid(this.position, this.target));
-            // Make ground walkable and stone mineable
-            Dwarf.easystar.setAcceptableTiles([0, 1]);
-            // Make mining walls expensive so that they prefer pre-carved tunnels
-            Dwarf.easystar.setTileCost(1, 3);
-            let [w, h] = Dwarf.gridSize(this.position, this.target);
-            let [x, y] = Dwarf.worldToGrid(this.position, this.target, w, h);
-            let [tx, ty] = Dwarf.worldToGrid(this.target, this.target, w, h);
-            Dwarf.easystar.findPath(x, y, tx, ty, (path) => {
-                if (path === null) {
-                    this.changeState("idle");
-                    console.log("No path was found!");
-                    return;
-                }
-                this.path = path.map((node) => { 
-                    let [x, y] = Dwarf.gridToWorld({x: node.x, y: node.y}, this.target, w, h);
-                    return {x: x, y: y, type: getTile(x, y)};
-                });
-                console.log("Path found!" + " " + this.path);
-                if (this.target.type == "hall")
-                    this.changeState("hauling");
-                else
-                    this.changeState("mining");
+                // Create a grid for the pathfinding algorithm
+                Dwarf.easystar.setGrid(Dwarf.createGrid(this.position, this.target));
+                // Make ground walkable and stone mineable
+                Dwarf.easystar.setAcceptableTiles([0, 1]);
+                // Make mining walls expensive so that they prefer pre-carved tunnels
+                Dwarf.easystar.setTileCost(1, 3);
+                let [w, h] = Dwarf.gridSize(this.position, this.target);
+                let [x, y] = Dwarf.worldToGrid(this.position, this.target, w, h);
+                let [tx, ty] = Dwarf.worldToGrid(this.target, this.target, w, h);
+                Dwarf.easystar.findPath(x, y, tx, ty, (path) => {
+                    if (path === null) {
+                        this.changeState("idle");
+                        console.log("No path was found!");
+                        return;
+                    }
+                    console.log("Path found!");
+                    this.path = path.map((node) => { 
+                        let [x, y] = Dwarf.gridToWorld({x: node.x, y: node.y}, this.target, w, h);
+                        return {x: x, y: y, type: getTile(x, y)};
+                    });
+                    if (this.target.type == "hall")
+                        this.changeState("hauling");
+                    else
+                        this.changeState("mining");
                 });
             }
             this.changeState("searching");
@@ -135,6 +135,7 @@ class Dwarf {
         else if (this.state === "hauling") {
             if (this.distanceTo(this.target) <= 1) {
                 this.changeState("idle");
+                dwarves[this.clan].push(new Dwarf(this.spawn.x, this.spawn.y, this.clan));
                 this.path = null;
                 return;
             }
@@ -147,14 +148,32 @@ class Dwarf {
             }
         }
         else if (this.state === "mining") {
-            if (this.distanceTo(this.target) <= 1) {
+            // Check piece hasnt been mined yet
+            if (getTile(this.target.x, this.target.y) !== "ore") {
                 this.changeState("idle");
+                this.path = null;
+                return;
+            }
+            if (this.distanceTo(this.target) === 1) {
+                if (this.target.type === "ore") {
+                    this.learn(...this.identifyVein(this.target));
+                    this.mine(this.target, true);
+                }
+                else {
+                    if (this.target.type === "stone")
+                        this.mine(this.target, false);
+                    this.position = {x: this.target.x, y: this.target.y};
+                    this.changeState("idle");
+                }
                 this.path = null;
                 return;
             }
             let tile = this.getNextTile();
             if (tile.type === "ground" || tile.type === "hall") {
                 this.position = {x: tile.x, y: tile.y};
+            }
+            else if (tile.type === "ore") {
+                this.mine(tile, true);
             }
             else {
                 this.mine(tile, false);
@@ -238,6 +257,17 @@ class Dwarf {
         });
     }
 
+    unlearn(tile) {
+        if (tile.type == "stone" || tile.type == "ground" || !this.knowledge[tile.type])
+            return;
+        this.knowledge[tile.type] = this.knowledge[tile.type].filter(knowledgeTile => {
+            return knowledgeTile.x !== tile.x || knowledgeTile.y !== tile.y;
+        });
+        Dwarf.clanKnowledge[this.clan][tile.type] = Dwarf.clanKnowledge[this.clan][tile.type].filter(knowledgeTile => {
+            return knowledgeTile.x !== tile.x || knowledgeTile.y !== tile.y;
+        });
+    }
+
     recall(type) {
         if (this.knowledge[type]) {
             return this.knowledge[type];
@@ -253,7 +283,9 @@ class Dwarf {
     }
 
     getNextTile() {
-        return this.path.shift();
+        let tile = this.path.shift();
+        tile.type = getTile(tile.x, tile.y);
+        return tile;
     }
 
     // Copilot    
@@ -276,15 +308,19 @@ class Dwarf {
     mine(tile, updateBehavior = true) {
         modifiedTiles[[tile.x, tile.y]] = tileTypes.ground;
         this.position = {x: tile.x, y: tile.y};
-        if (tile.type === "ore" && updateBehavior) {
-            this.changeState("pathfinding");
-            this.target = this.knowledge["hall"][0];
+        if (tile.type === "ore") {
+            this.unlearn(tile);
+            if (updateBehavior) {
+                this.changeState("pathfinding");
+                this.path = null;
+                this.target = this.knowledge["hall"][0];
+            }
         }
     }
 
     createHall(_x, _y) {
         modifiedTiles[[_x, _y]] = tileTypes.hall;
-        Dwarf.clanKnowledge[this.clan]["hall"] = [{x: _x, y: _y}];
+        Dwarf.clanKnowledge[this.clan]["hall"] = [{x: _x, y: _y, type: "hall"}];
     }
 
     changeState(state) {
@@ -310,10 +346,12 @@ class Dwarf {
     }
 
     static gridToWorld(pos, target, width, height) {
-        return [pos.x - width + target.x, -pos.y + height + target.y];
+        //console.log("g->w: ", pos, target, width, height);
+        return [pos.x - width + target.x, pos.y - height + target.y];
     }
 
     static worldToGrid(pos, target, width, height) {
+        //console.log("w->g: ", pos, target, width, height);
         return [pos.x + width - target.x, pos.y + height - target.y];
     }
 
@@ -327,15 +365,14 @@ class Dwarf {
                 grid[iy][ix] = type === "ground" || type === "hall" ? 0 : 1;
             }
         }
-        console.log(grid);
         return grid;
     }
 
     static gridSize(pos, target) {
         let dx = Math.abs(target.x - pos.x)
         let dy = Math.abs(target.y - pos.y)
-        let w = Math.max(dx * 2, 100)
-        let h = Math.max(dy * 2, 100)
+        let w = Math.max(dx * 2, 50)
+        let h = Math.max(dy * 2, 50)
         return [w, h]
     }
 }
