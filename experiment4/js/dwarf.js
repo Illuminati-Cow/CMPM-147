@@ -9,6 +9,7 @@ class Dwarf {
     static searchRadius = 30;
     static updateInterval = 250;
     static sightRadius = 20;
+    static dwarfSpawnRate = 0.66;
     static _ = (() => {
         fetch("./js/dwarfNames.json")
             .then(response => response.json())
@@ -135,7 +136,8 @@ class Dwarf {
         else if (this.state === "hauling") {
             if (this.distanceTo(this.target) <= 1) {
                 this.changeState("idle");
-                dwarves[this.clan].push(new Dwarf(this.spawn.x, this.spawn.y, this.clan));
+                if (Math.random() >= Dwarf.dwarfSpawnRate)
+                    dwarves[this.clan].push(new Dwarf(this.spawn.x, this.spawn.y, this.clan));
                 this.path = null;
                 return;
             }
