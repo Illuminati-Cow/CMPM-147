@@ -17,7 +17,12 @@ var tileTypes = {};
 var baseColor;
 var noiseScale = 0.1;
 var noiseLevel = 2;
+var oreNoiseScale = 0.25;
+var oreNoiseLevel = 1;
+var oreNoiseOctaves = 5;
 var cameraZoom = 1;
+var dwarves = {};
+var activeClans = [];
 
 /////////////////////////////
 // Transforms between coordinate systems
@@ -67,9 +72,29 @@ function preload() {
 }
 
 function generateTileData([x, y]) {
+    if (modifiedTiles && modifiedTiles[[x, y]]) {
+        return modifiedTiles[[x, y]];
+    }
     let noise = noiseLevel * pg.noise(x * noiseScale, y * noiseScale);
     //console.log(noise);
-    if (noise > 0.75) {
+    if (noise > 0.97) {
+        let x1 = x * oreNoiseScale + noise;
+        let y1 = y * oreNoiseScale + noise;
+        noise = oreNoiseLevel * pg.noise(x1, y1);
+        if (noise > 0.5) {
+            return tileTypes.ore;
+        }
+        return tileTypes.stone;
+    }
+    else if (noise > 0.75 && noise < 0.7501) {
+        let clan = XXH.h32(`${x}_${y}`, worldSeed);
+        if (!dwarves[clan]) {
+            dwarves[clan] = [];
+            dwarves[clan].push(new Dwarf(x, y, clan));
+        }
+        return tileTypes.hall;
+    }
+    else if (noise > 0.75) {
         return tileTypes.ground;
     }
     else {
@@ -131,12 +156,18 @@ let p0 = new p5((sketch) => {
                 southFaceColor: sketch.color("hsl(20, 7%, 47%)"),
                 description: "Ground",
             },
-            gold: {
+            ore: {
                 upFaceColor: sketch.color("hsl(44, 65%, 68%)"),
                 westFaceColor: sketch.color("hsl(44, 65%, 48%)"),
                 southFaceColor: sketch.color("hsl(44, 65%, 52%)"),
-                description: "Gold",
+                description: "Ore",
             },
+            hall: {
+                upFaceColor: sketch.color("hsl(34, 82%, 30%)"),
+                westFaceColor: sketch.color("hsl(33, 82%, 15%)"),
+                southFaceColor: sketch.color("hsl(34, 82%, 22%)"),
+                description: "Hall",
+            }
         };
 
         baseColor = sketch.color("hsl(20, 7%, 36%)");
@@ -208,6 +239,32 @@ let p0 = new p5((sketch) => {
     let y1 = Math.max(Math.floor((1 + overdraw) * tile_rows), 20);
     let x0 = Math.min(Math.floor((0 - overdraw) * tile_columns), -20);
     let x1 = Math.max(Math.floor((1 + overdraw) * tile_columns), 20);
+
+    let offset = {
+        top_right: {x: world_pos[0] - sketch.width / 4, y: world_pos[1] - sketch.height / 4}, 
+        bottom_left: {x: world_pos[0] + sketch.width / 4, y: world_pos[1] + sketch.height / 4}
+    }
+
+    //console.log(offset);
+
+    for (let clan in dwarves) {
+        if (Dwarf.clanKnowledge[clan]["hall"]) {
+            let hall = Dwarf.clanKnowledge[clan]["hall"][0];
+            if (hall.x > offset.top_right.x && hall.x < offset.bottom_left.x && 
+                    hall.y < offset.bottom_left.y && hall.y > offset.top_right.y) {
+                if (!Dwarf.isClanActive(clan)) {
+                    Dwarf.setClanActive(clan, true);
+                    activeClans.push(clan);
+                }
+            }
+            else {
+                if (Dwarf.isClanActive(clan)) {
+                    Dwarf.setClanActive(clan, false);
+                    activeClans.splice(activeClans.indexOf(clan), 1);
+                }
+            }
+        }
+    }
 
     for (let y = y0; y < y1; y++) {
         for (let x = x0; x < x1; x++) {

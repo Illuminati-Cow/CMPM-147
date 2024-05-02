@@ -20,7 +20,7 @@ function p3_setup() {}
 
 var pg = new p5((sketch) => {
   sketch.setup = () => {
-
+    sketch.noiseDetail(oreNoiseOctaves, 0.25);
   };
 });
 
@@ -28,6 +28,7 @@ let worldSeed;
 const gap_px = 2;
 var tileWidth = 32;
 var tileHeight = 16;
+let buffer = [];
 
 function p3_worldKeyChanged(key) {
   worldSeed = XXH.h32(key, 0);
@@ -57,6 +58,8 @@ function p3_drawBefore() {
 
 function p3_drawTile(i, j, tileData) {
   p0.noStroke();
+  let hash = XXH.h32(`${i}_${j}`, worldSeed);
+
   p0.push();
 
   let tile = tileData
@@ -74,7 +77,8 @@ function p3_drawTile(i, j, tileData) {
     p0.vertex(0 - gap_px, -th - gap_px / 2);
     p0.endShape(p0.CLOSE);
     p0.pop();
-    return
+    drawDwarve(i, j);
+    return;
   }
   else if (tile.description == "Ground") {
     tile = tileTypes.stone;
@@ -129,6 +133,7 @@ function p3_drawTile(i, j, tileData) {
   p0.vertex(tw + gapw_s, -2*th + gaph_s);
   p0.endShape(p0.CLOSE);
 
+  drawDwarve(i, j);
   p0.pop();
 }
 
@@ -164,4 +169,28 @@ function isGround(i, j) {
   return (!clicked && ground) || (clicked && !ground);
 }
 
-function p3_drawAfter() {}
+function getTile(i, j) {
+  let tile = generateTileData([i, j]);
+  if (tile.description == "Ground" && !isGround(i, j)) {
+    return tileTypes.stone;
+  }
+  else if (isGround(i, j)) {
+    return tileTypes.ground;
+  }
+  return tile.description.toLowerCase();
+}
+
+function p3_drawAfter() {
+  
+}
+
+function drawDwarve(i, j) {
+  for (let clan of activeClans) {
+    for (let dwarf of Dwarf.clanKnowledge[clan]["dwarf"]) {
+      if (dwarf.position.x == i && dwarf.position.y == j) {
+        dwarf.draw();
+        dwarf.update();
+      }
+    }
+  }
+}
