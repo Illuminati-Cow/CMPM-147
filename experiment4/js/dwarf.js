@@ -5,11 +5,11 @@ var modifiedTiles = {};
 class Dwarf {
     static dwarfNames = []
     static clanKnowledge = {};
-    static easystar = new EasyStar.js();
     static searchRadius = 30;
     static updateInterval = 250;
     static sightRadius = 20;
     static dwarfSpawnRate = 0.66;
+    static searchIterations = 1000;
     static _ = (() => {
         fetch("./js/dwarfNames.json")
             .then(response => response.json())
@@ -36,7 +36,8 @@ class Dwarf {
         this.target = null;
         this.path = null;
         this.lastUpdate = p0.millis();
-        //Dwarf.easystar.setIterationsPerCalculation(1000);
+        this.easystar = new EasyStar.js();
+        this.easystar.setIterationsPerCalculation(Dwarf.searchIterations);
     };
 
     draw() {
@@ -68,7 +69,7 @@ class Dwarf {
         this.seeNearbyOres();
         this.learn(...surroundingTiles);
         if (this.state === "searching") {
-            Dwarf.easystar.calculate(10000);
+            this.easystar.calculate(10000);
         }
         else if (this.state === "idle") {	
             if (surroundingTiles.some(tile => tile.type == "ore")) {
@@ -106,15 +107,17 @@ class Dwarf {
         else if (this.state === "pathfinding") {
             if (this.path === null) {
                 // Create a grid for the pathfinding algorithm
-                Dwarf.easystar.setGrid(Dwarf.createGrid(this.position, this.target));
+                this.easystar.setGrid(Dwarf.createGrid(this.position, this.target));
                 // Make ground walkable and stone mineable
-                Dwarf.easystar.setAcceptableTiles([0, 1]);
+                this.easystar.setAcceptableTiles([0, 1, 2]);
                 // Make mining walls expensive so that they prefer pre-carved tunnels
-                Dwarf.easystar.setTileCost(1, 3);
+                this.easystar.setTileCost(1, 9999);
+                this.easystar.setTileCost(2, 99);
                 let [w, h] = Dwarf.gridSize(this.position, this.target);
                 let [x, y] = Dwarf.worldToGrid(this.position, this.target, w, h);
                 let [tx, ty] = Dwarf.worldToGrid(this.target, this.target, w, h);
-                Dwarf.easystar.findPath(x, y, tx, ty, (path) => {
+                console.log("Finding path from ", x, y, " to ", tx, ty);
+                this.easystar.findPath(x, y, tx, ty, (path) => {
                     if (path === null) {
                         this.changeState("idle");
                         console.log("No path was found!");
@@ -363,10 +366,15 @@ class Dwarf {
         for (let iy = 0; iy < 2 * h; iy++) {
             grid[iy] = Array(2 * w).fill(0);
             for (let ix = 0; ix < 2 * w; ix++) {
-                let type = getTile(...Dwarf.gridToWorld({x: ix, y: iy}, target, w, h))
-                grid[iy][ix] = type === "ground" || type === "hall" ? 0 : 1;
+                let type = getTile(...Dwarf.gridToWorld({x: ix, y: iy}, target, w, h));
+                grid[iy][ix] = type === "ground" || type === "hall" ? 0 : (type === "ore" ? 2 : 1);
             }
         }
+        let t = Dwarf.worldToGrid(target, target, w, h);
+        let p = Dwarf.worldToGrid(pos, target, w, h);
+        p = {x: p[0], y: p[1]};
+        console.log(grid[p.y][p.x], grid[p.y-1][p.x+1], grid[p.y+1][p.x], grid[p.y][p.x+1], grid[p.y][p.x-1])
+        console.log("Grid: ", grid);
         return grid;
     }
 

@@ -172,10 +172,10 @@ function isGround(i, j) {
 function getTile(i, j) {
   let tile = generateTileData([i, j]);
   if (tile.description == "Ground" && !isGround(i, j)) {
-    return tileTypes.stone;
+    return tileTypes.stone.description.toLowerCase();
   }
   else if (isGround(i, j)) {
-    return tileTypes.ground;
+    return tileTypes.ground.description.toLowerCase();
   }
   return tile.description.toLowerCase();
 }
