@@ -44,11 +44,22 @@
 			<div class="minor-section multi-box">
 				<div class="text">
 					<h2>Description</h2>
-					<p>What are you trying to acomplish with this experiment?</p>
+					<p>An infinte isometric world generator inhabited by a quickly expanding Dwarven population. Watch as they 
+						devour all ore in their paths and carve out the endless caverns of their world.
+					</p>
 						<h2>Technical</h2>
-						<p>Describe in detail what you did technically and how it works?</p>		
+						<p>The genretor determines tile types via a Perlin noise genreator seeded with the world seed.
+							This allows the world to be generated in a deterministic manner. The Dwarves are controlled by an A* pathfinding
+							and will seek out ore to mine. The world data is not saved as it is generated at run time via the seed. So,
+							surveying the world will not eat up your memory. Zooming out will explode your computer though. Modified tiles are
+							recoreded via a hash table to indicate a deviation from the predetermined tile type.
+						</p>		
 						<h2>Reflection</h2>
-						<p>Each person that worked on the code should reflect on the process, the difficulties, and the successes of the experiment.</p>
+						<p>This project went swimmingly and was a joy to work on. I did encounter some serious challenges which included
+							coming up with a solution to the A* pathfinding algorithm. I had to modify the algorithm to allow for the Dwarves
+							to pathfind in an infitnite world, preventing me from simply loading up all the tiles into a grid. Instead I had
+							to create a grid surrounding the start and end points the path and then convert between coordinate spaces.
+						</p>
 				</div>
 				<div class="multi-box">
 					<div class="vertical" id="container">
