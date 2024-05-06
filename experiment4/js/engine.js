@@ -196,7 +196,7 @@ let p0 = new p5((sketch) => {
     if (window.p3_tileClicked) {
         window.p3_tileClicked(world_pos[0], world_pos[1]);
     }
-    return false;
+    return true;
     }
 
     sketch.draw = () => {

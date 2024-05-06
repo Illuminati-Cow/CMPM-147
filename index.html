@@ -13,13 +13,16 @@
 	<link rel="stylesheet" type="text/css" href="css/fonts.css">
 	<!-- Experiment-specifc CSS file for any special styling of this particular page -->
 	<link rel="stylesheet" type="text/css" href="css/homepage.css">
-	<!-- Link to javascript file - DEFER waits until all elements are rendered -->
-	<script type="text/javascript" src="./js/experiment.js"></script>
+		<!-- Load jQuery library -->
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+	integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+	crossorigin="anonymous"></script>
+	<script type="text/javascript" src="./js/site.js" defer></script>
 </head>
 <body>
 	<main id="content">
         <h1>Cole Falxa-Sturken's Portfolio</h1>
-		<div class="navbar">
+		<div class="navbar" id="home-nav">
 			<a href="./index.html">Home</a>
 			<a href="./experiment1/index.html">Experiment 1</a>
 			<a href="./experiment2/index.html">Experiment 2</a>
