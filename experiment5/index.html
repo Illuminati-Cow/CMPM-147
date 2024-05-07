@@ -25,7 +25,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
 		
 	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
-
+	<script type="text/javascript" src="./js/generator.js" DEFER></script>
 	<script type="text/javascript" src="../js/site.js" defer></script>
 	<!-- Use me for a p5.js project -->
 	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
@@ -47,14 +47,24 @@
 			<div class="minor-section">
 				<h2>Description</h2>
 				<div class="multi-box">
-					<div class="text">
-						<p>
-							Text.
-						</p>
-					</div>
-					<div id="canvas-container">
-						<!-- canvas will be added here -->
-					</div>
+					<div class="image">
+                        <p id="original"></p>
+                        <p class="caption"></p>
+                    </div>
+                    <div class="image">
+                        <p id="active"></p>
+                        <p>Active</p>
+                    </div>
+                    <div class="image">
+                        <p id="best"></p>
+                        <p>Best</p>
+                    </div>
+				</div>
+				<div class="multi-box" id="controls">
+					<input type="range" min="0" max="100" value="50" class="slider">
+				</div>
+				<div id="memory" class="collage-box">
+
 				</div>
 			</div>
 
