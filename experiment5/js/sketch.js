@@ -22,11 +22,10 @@ let allInspirations;
 
 // Gen Vars
 let population = [];
-let populationSize = 50;
+let populationSize = 500;
 let shapeCount = 100;
-let shapeMaxSize = 100;
-let shapeMinSize = 5;
-let survivorCount = 10;
+let shapeMaxSize = 60;
+let shapeMinSize = 20;
 let imageWidth = 160;
 let imageHeight = 90;
 
@@ -118,7 +117,7 @@ function draw() {
   }
   randomSeed(mutationCount++);
   rate = Number(slider.value);
-  let best = createNewGeneration(population, 100);
+  let best = createNewGeneration(rate);
   currentDesign.score = best.score
   currentDesign.img = best.img;
   randomSeed(0);

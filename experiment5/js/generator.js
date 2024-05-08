@@ -53,50 +53,47 @@ function getInspirations() {
     scale(4);
   }
   
-  function createNewGeneration(rate) {
-    rate = 50
-    console.log(typeof rate, rate)
+  function createNewGeneration(mutrate) {
     currentInspirationImage.loadPixels();
     let truthPixels = currentInspirationImage.pixels;
-    let nBest = nBestSequences(survivorCount, population, truthPixels);
+    let bestSeqs = bestSequences(population, truthPixels);
     // Cross best sequences
     let newPopulation = [];
     let j = 0;
     for(let i = 0; i < population.length; i++) {
-      let seq1 = nBest[j++ % nBest.length];
-      let seq2 = nBest[j++ % nBest.length];
+      let seq1 = bestSeqs[j++ % bestSeqs.length];
+      let seq2 = bestSeqs[j++ % bestSeqs.length];
       let newSequence = crossSequences(seq1, seq2);
-      mutateSequence(newSequence, rate);
+      let copy = JSON.parse(JSON.stringify(newSequence));
+      mutateSequence(newSequence, mutrate);
       newPopulation.push(newSequence);
     }
-    // Debug
-    let isPopulationEqual = JSON.stringify(population) === JSON.stringify(newPopulation);
-    console.log("Is population equal to newPopulation?", isPopulationEqual);
     population = newPopulation;
-    return nBest[0];
+    return bestSeqs[0];
   }
 
   function crossSequences(seq1, seq2) {
     let sequence = [];
-    for(let i = 0; i < shapeCount; i++) {
-      let gene = random(1) > 0.5 ? seq1[i] : seq2[i];
-      sequence.push(gene);
-    }
+    let crossPoint = int(random() * seq1.length)
+    // Cross halves
+    sequence = seq1.slice(0, crossPoint).concat(seq2.slice(crossPoint))
     return sequence;
   }
 
   // Mutate genetic sequence passed in as reference
-  function mutateSequence(sequence, rate) {
-    console.log(typeof rate, rate)
+  function mutateSequence(sequence, mutrate) {
+    mutrate /= 50;
     for(let i = 0; i < sequence.length; i++) {
-      if (random(100) < rate) {
+      if (Math.random(100) < mutrate) {
         let gene = sequence[i];
+        let grayscale = mut(gene.fill.a, 0, 255, mutrate)
         let newGene = {
-          x: mut(gene.x, 0, imageWidth, rate),
-          y: mut(gene.y, 0, imageHeight, rate),
-          w: mut(gene.w, shapeMinSize, shapeMaxSize, rate),
-          h: mut(gene.h, shapeMinSize, shapeMaxSize, rate),
-          fill: mutColor(gene.fill, rate)
+          x: mut(gene.x, 0, imageWidth, mutrate),
+          y: mut(gene.y, 0, imageHeight, mutrate),
+          w: mut(gene.w, shapeMinSize, shapeMaxSize, mutrate),
+          h: mut(gene.h, shapeMinSize, shapeMaxSize, mutrate),
+          fill: {r: grayscale, g: grayscale, b: grayscale, a: 128}
+          // fill: mutColor(gene.fill, mutrate)
         }
         sequence[i] = newGene;
       }
@@ -106,12 +103,14 @@ function getInspirations() {
 function createGeneticSequence() {
   let sequence = [];
   for(let i = 0; i < shapeCount; i++) {
+    let grayscale = random(255);
     let gene = {
       x: int(random(imageWidth)),
       y: int(random(imageHeight)),
       w: int(random(shapeMinSize, shapeMaxSize)),
       h: int(random(shapeMinSize, shapeMaxSize)),
-      fill: {r: int(random(255)), g: int(random(255)), b: int(random(255)), a: 255}
+      fill: {r: grayscale, g: grayscale, b: grayscale, a: 128}
+      //fill: {r: int(random(255)), g: int(random(255)), b: int(random(255)), a: 255}
     }
     sequence.push(gene);
   }
@@ -119,19 +118,31 @@ function createGeneticSequence() {
 }
 
 
-function nBestSequences(n, population, truthPixels) {
+function bestSequences(population, truthPixels) {
   let scores = [];
-  for(let i = 0; i < population.length; i++) {
-    let [score, img] = evaluateSequence(population[i], truthPixels);
+  let tournamentPop = [];
+  let selectionPercentage = 0.08;
+  let selectionCount = Math.floor(population.length * selectionPercentage);
+
+  for (let i = 0; i < selectionCount; i++) {
+    let randomIndex = Math.floor(Math.random() * population.length);
+    tournamentPop.push(population[randomIndex]);
+  }
+
+  // Run tournament
+  for(let i = 0; i < tournamentPop.length; i++) {
+    let [score, img] = evaluateSequence(tournamentPop[i], truthPixels);
     scores.push({score: score, index: i, img: img});
   }
+
   scores.sort((a, b) => b.score - a.score);
   let best = [];
-  for(let i = 0; i < n; i++) {
-    best.push(population[scores[i].index]);
+  for(let i = 0; i < scores.length; i++) {
+    best.push(tournamentPop[scores[i].index]);
     best[i].score = scores[i].score;
     best[i].img = scores[i].img;
   }
+
   return best;
 }
 
@@ -180,7 +191,7 @@ function mutColor(color, rate) {
   r: mut(color.r, 0, 255, rate),
   g: mut(color.g, 0, 255, rate),
   b: mut(color.b, 0, 255, rate),
-  a: 255
+  a: 128
   }
 }
 
