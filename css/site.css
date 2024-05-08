@@ -115,6 +115,10 @@ a {
   flex-direction: column;
 }
 
+.multi-box .vertical > * {
+  flex: 1 1 auto;
+}
+
 .multi-box .text {
   flex: 1 1 auto;
   max-width: 50%;
@@ -129,6 +133,19 @@ a {
   border: 2px solid var(--highlight-color);
   border-radius: 2px;
   align-self: center;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -o-border-radius: 2px;
+}
+
+.multi-box .vertical .image {
+  display: flex;
+  max-width: 100%;
+  margin: auto;
+  padding: 10px;
+  border: 2px solid var(--highlight-color);
+  border-radius: 2px;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   -ms-border-radius: 2px;

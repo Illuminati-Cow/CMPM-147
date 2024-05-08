@@ -18,7 +18,7 @@ function getInspirations() {
   
   function initDesign(inspiration) {
     // set the canvas size based on the container
-    let canvasContainer = $('.image-container'); // Select the container using jQuery
+    let canvasContainer = $('#canvas-container'); // Select the container using jQuery
     let canvasWidth = canvasContainer.width(); // Get the width of the container
     let aspectRatio = inspiration.image.height / inspiration.image.width;
     let canvasHeight = canvasWidth * aspectRatio; // Calculate the height based on the aspect ratio
@@ -26,9 +26,7 @@ function getInspirations() {
     $(".caption").text(inspiration.credit); // Set the caption text
   
     // add the original image to #original
-    const imgHTML = `<img src="${inspiration.assetUrl}" style="width:${canvasWidth}px;">`
-    $('#original').empty();
-    $('#original').append(imgHTML);
+    $('#original').attr('src', `${inspiration.assetUrl}`)
   
     
     let design = {
@@ -57,6 +55,7 @@ function getInspirations() {
   }
   
   function mutateDesign(design, inspiration, rate) {
+    console.log(design, inspiration, rate)
     design.bg = mut(design.bg, 0, 255, rate);
     for(let box of design.fg) {
       box.fill = mut(box.fill, 0, 255, rate);

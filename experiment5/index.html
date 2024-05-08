@@ -21,12 +21,11 @@
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
         crossorigin="anonymous"></script>
-		<!-- Load p5.js library -->
-		<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
-		
+	<!-- Load p5.js library -->
+	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
 	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
 	<script type="text/javascript" src="./js/generator.js" DEFER></script>
-	<script type="text/javascript" src="../js/site.js" defer></script>
+	<script type="text/javascript" src="../js/site.js" DEFER></script>
 	<!-- Use me for a p5.js project -->
 	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
 </head>
@@ -35,7 +34,7 @@
 	<main id="content">
 		<section>
 
-			<h1>Experiment 5 - Procedural Textures/h1>
+			<h1>Experiment 5 - Procedural Textures</h1>
 			<div class="navbar" id="main-nav">
 				<a href="../index.html">Home</a>
 				<a href="../experiment1/index.html">Experiment 1</a>
@@ -45,26 +44,36 @@
 			</div>
 
 			<div class="minor-section">
-				<h2>Description</h2>
 				<div class="multi-box">
-					<div class="image">
-                        <p id="original"></p>
+					<div class="vertical">
+                        <img class="image" id="original"/>
                         <p class="caption"></p>
                     </div>
-                    <div class="image">
-                        <p id="active"></p>
-                        <p>Active</p>
+                    <div class="vertical" id="canvas-container">
+                        <img id="active" class="image"/>
+                        <p class="caption">Active</p>
                     </div>
-                    <div class="image">
-                        <p id="best"></p>
-                        <p>Best</p>
+                    <div class="vertical">
+                        <img class="image" id="best"/>
+                        <p class="caption">Best</p>
                     </div>
 				</div>
 				<div class="multi-box" id="controls">
-					<input type="range" min="0" max="100" value="50" class="slider">
+					<div class="vertical">
+						<input type="range" min="0" max="100" value="50" class="slider">
+						<p id="rate"></p>
+						<input type="button" id="prev" value="Prev">
+						<input type="button" id="next" value="Next">
+						<input type="button" id="restart" value="Restart">
+					</div>
+					<div class="vertical">
+                        <p>Active score: <span id="activeScore"></span></p>
+                        <p>Exploration rate: <span id="fpsCounter"></span> fps</p>
+                        <p>Best score: <span id="bestScore"></span></p>
+                    </div>
 				</div>
-				<div id="memory" class="collage-box">
-
+				<div class="collage-box">
+					<p id="memory" data-max-items="28"></p>
 				</div>
 			</div>
 

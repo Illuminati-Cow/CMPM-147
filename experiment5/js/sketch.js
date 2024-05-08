@@ -9,27 +9,47 @@ let bestDesign;
 let currentDesign;
 let currentScore;
 let currentInspiration;
+let currentInspirationIndex;
 let currentCanvas;
 let currentInspirationPixels;
+let next;
+let prev;
+let memory;
+let rate;
+let slider;
+let activeScore, bestScore, nextScore;
 
 function preload() {
   
   let allInspirations = getInspirations();
-
+  console.log(allInspirations)
   for (let i = 0; i < allInspirations.length; i++) {
     let insp = allInspirations[i];
     insp.image = loadImage(insp.assetUrl);
-    let option = document.createElement("option");
-    option.value = i;
-    option.innerHTML = insp.name;
-    dropper.appendChild(option);
   }
-  
-  dropper.onchange = e => inspirationChanged(allInspirations[e.target.value]);
+  next = $('#next');
+  prev = $('#prev');
+  memory = document.getElementById("memory")
+  slider = $('slider');
+  activeScore = $('#activeScore');
+  bestScore = $('bestScore');
+  rate = 0;
+  let wrap = (d) => {
+    let x = currentInspiration
+    if (x + d >= allInspirations.length)
+      currentInspiration = x + d - allInspirations.length;
+    else if (x + d < 0)
+      currentInspiration = x + d + allInspirations.length;
+    else
+      currentInspiration = x + d;
+    return currentInspiration;
+  }
+  next.onclick = e => inspirationChanged(allInspirations[wrap(currentInspirationIndex, 1)]);
+  prev.onclick = e => inspirationChanged(allInspirations[wrap(currentInspirationIndex, -1)])
   currentInspiration = allInspirations[0];
 
   restart.onclick = () =>
-    inspirationChanged(allInspirations[dropper.value]);
+    inspirationChanged(allInspirations[currentInspirationIndex]);
 }
 
 function inspirationChanged(nextInspiration) {
@@ -94,7 +114,7 @@ function draw() {
   }
   randomSeed(mutationCount++);
   currentDesign = JSON.parse(JSON.stringify(bestDesign));
-  rate.innerHTML = slider.value;
+  ($('#rate')).innerHTML = slider.value;
   mutateDesign(currentDesign, currentInspiration, slider.value/100.0);
   
   randomSeed(0);
