@@ -4,6 +4,11 @@
 function getInspirations() {
     return [
       {
+        name: "Malcolm X",
+        assetUrl : "img/malcolm-x.jpg",
+        credit: "Unknown"
+      },
+      {
         name: "San Sebastian", 
         assetUrl: "img/san-sebastian.png",
         credit: "San Sebastian, Peeter Viisimaa, 2018"
