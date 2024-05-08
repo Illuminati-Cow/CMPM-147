@@ -1,6 +1,6 @@
-// sketch.js - purpose and description here
-// Author: Your Name
-// Date:
+// sketch.js - Procedural Texture Generator
+// Author: Cole Falxa-Sturken
+// Date: 5/7/2024
 
 /* exported preload, setup, draw */
 /* global memory, dropper, restart, rate, slider, activeScore, bestScore, fpsCounter */
@@ -11,48 +11,63 @@ let currentScore;
 let currentInspiration;
 let currentInspirationIndex;
 let currentCanvas;
-let currentInspirationPixels;
+let currentInspirationImage;
 let next;
 let prev;
 let memory;
 let rate;
 let slider;
-let activeScore, bestScore, nextScore;
+let activeScore, bestScore, nextScore, fpsCounter;
+let allInspirations;
+
+// Gen Vars
+let population = [];
+let populationSize = 50;
+let shapeCount = 100;
+let shapeMaxSize = 100;
+let shapeMinSize = 5;
+let survivorCount = 10;
+let imageWidth = 160;
+let imageHeight = 90;
 
 function preload() {
   
-  let allInspirations = getInspirations();
+  allInspirations = getInspirations();
   console.log(allInspirations)
   for (let i = 0; i < allInspirations.length; i++) {
     let insp = allInspirations[i];
     insp.image = loadImage(insp.assetUrl);
   }
-  next = $('#next');
-  prev = $('#prev');
-  memory = document.getElementById("memory")
-  slider = $('slider');
+  next = document.getElementById("next");
+  prev = document.getElementById("prev");
+  memory = document.getElementById("memory");
+  slider = document.getElementById("rate");
   activeScore = $('#activeScore');
-  bestScore = $('bestScore');
+  bestScore = $('#bestScore');
+  fpsCounter = $('#fpsCounter');
   rate = 0;
   let wrap = (d) => {
-    let x = currentInspiration
+    let x = currentInspirationIndex
     if (x + d >= allInspirations.length)
-      currentInspiration = x + d - allInspirations.length;
+      currentInspirationIndex = x + d - allInspirations.length;
     else if (x + d < 0)
-      currentInspiration = x + d + allInspirations.length;
+      currentInspirationIndex = x + d + allInspirations.length;
     else
-      currentInspiration = x + d;
-    return currentInspiration;
+      currentInspirationIndex = x + d;
+    return currentInspirationIndex;
   }
-  next.onclick = e => inspirationChanged(allInspirations[wrap(currentInspirationIndex, 1)]);
-  prev.onclick = e => inspirationChanged(allInspirations[wrap(currentInspirationIndex, -1)])
+  currentInspirationIndex = 0;
   currentInspiration = allInspirations[0];
-
+  next.onclick = e => inspirationChanged(allInspirations[wrap(1)]);
+  prev.onclick = e => inspirationChanged(allInspirations[wrap(-1)])
+  restart = document.getElementById("restart");
   restart.onclick = () =>
     inspirationChanged(allInspirations[currentInspirationIndex]);
 }
 
 function inspirationChanged(nextInspiration) {
+  console.log("Inspiration changed")
+  console.log(currentInspirationIndex, nextInspiration)
   currentInspiration = nextInspiration;
   currentDesign = undefined;
   memory.innerHTML = "";
@@ -60,26 +75,15 @@ function inspirationChanged(nextInspiration) {
 }
 
 function setup() {
+  console.log("Setting up")
   currentCanvas = createCanvas(width, height);
   currentCanvas.parent(document.getElementById("active"));
   currentScore = Number.NEGATIVE_INFINITY;
   currentDesign = initDesign(currentInspiration);
   bestDesign = currentDesign;
-  image(currentInspiration.image, 0,0, width, height);
-  loadPixels();
-  currentInspirationPixels = pixels;
-}
-
-function evaluate() {
-  loadPixels();
-
-  let error = 0;
-  let n = pixels.length;
-  
-  for (let i = 0; i < n; i++) {
-    error += sq(pixels[i] - currentInspirationPixels[i]);
-  }
-  return 1/(1+error/n);
+  currentInspirationImage = createImage(currentInspiration.image.width, currentInspiration.image.height);
+  currentInspirationImage.copy(currentInspiration.image, 0, 0, currentInspiration.image.width, currentInspiration.image.height, 0, 0, currentInspiration.image.width, currentInspiration.image.height);
+  currentInspirationImage.resize(width, height);
 }
 
 function memorialize() {
@@ -89,14 +93,14 @@ function memorialize() {
   img.classList.add("memory");
   img.src = url;
   img.width = width;
-  img.heigh = height;
+  img.height = height;
   img.title = currentScore;
 
   document.getElementById("best").innerHTML = "";
   document.getElementById("best").appendChild(img.cloneNode());
 
-  img.width = width / 2;
-  img.height = height / 2;
+  img.width = width / 4;
+  img.height = height / 4;
 
   memory.insertBefore(img, memory.firstChild);
 
@@ -113,20 +117,20 @@ function draw() {
     return;
   }
   randomSeed(mutationCount++);
-  currentDesign = JSON.parse(JSON.stringify(bestDesign));
-  ($('#rate')).innerHTML = slider.value;
-  mutateDesign(currentDesign, currentInspiration, slider.value/100.0);
-  
+  rate = Number(slider.value);
+  let best = createNewGeneration(population, 100);
+  currentDesign.score = best.score
+  currentDesign.img = best.img;
   randomSeed(0);
-  renderDesign(currentDesign, currentInspiration);
-  let nextScore = evaluate();
-  activeScore.innerHTML = nextScore;
+  renderDesign(currentDesign);
+  nextScore = currentDesign.score;
+  activeScore.html(nextScore.toFixed(8).padEnd(8, '0'));
   if (nextScore > currentScore) {
     currentScore = nextScore;
     bestDesign = currentDesign;
     memorialize();
-    bestScore.innerHTML = currentScore;
+    bestScore.html(currentScore.toFixed(8).padEnd(8, '0'));
   }
   
-  fpsCounter.innerHTML = Math.round(frameRate());
+  fpsCounter.html(Math.round(frameRate()));
 }
